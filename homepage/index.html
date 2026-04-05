@@ -19,12 +19,35 @@
       --accent:    #6366f1;
     }
 
+    --nav-bg: #13131c;
+    --nav-width: 260px;
+
     body {
       background: var(--bg);
       color: var(--text);
       font-family: 'Segoe UI', system-ui, sans-serif;
       min-height: 100vh;
+      display: flex;
     }
+
+    /* ── Sidebar nav ── */
+    .main-nav { width: var(--nav-width); min-width: var(--nav-width); background: var(--nav-bg);
+      border-right: 1px solid var(--border); padding: 1.5rem 0; overflow-y: auto;
+      position: sticky; top: 0; height: 100vh; }
+    .main-nav ul { list-style: none; }
+    .main-nav > ul > li > a { display: block; padding: .5rem 1.5rem; color: var(--muted);
+      text-decoration: none; font-size: .85rem; font-weight: 500;
+      border-left: 3px solid transparent; transition: all .15s; }
+    .main-nav > ul > li > a:hover,
+    .main-nav > ul > li > a.active { color: var(--text); border-left-color: var(--accent); background: rgba(99,102,241,.08); }
+    .main-nav ul ul { padding-left: 1rem; }
+    .main-nav ul ul a { display: block; padding: .3rem 1.5rem; color: var(--muted);
+      text-decoration: none; font-size: .8rem; border-left: 2px solid transparent; }
+    .main-nav ul ul a:hover { color: var(--text); border-left-color: var(--accent); }
+    .main-nav ul ul ul { padding-left: 1rem; }
+    .main-nav ul ul ul a { font-size: .75rem; padding: .25rem 1rem; }
+
+    .page-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
     header {
       background: var(--card-bg);
@@ -52,7 +75,7 @@
       text-align: right;
     }
 
-    main { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+    main { padding: 2rem; max-width: 1400px; margin: 0 auto; flex: 1; overflow-y: auto; }
 
     /* ── Summary cards ── */
     .summary {
@@ -167,6 +190,53 @@
 </head>
 <body>
 
+<nav class="main-nav">
+<ul>
+<li><a href="index.html" class="active">&#9670; Dashboard</a></li>
+<li><a href="news.html">Neuigkeiten</a></li>
+<li><a href="das-projekt.html">Das Projekt</a>
+<ul>
+<li><a href="arbeiten-im-projekt.html">Arbeiten im Projekt</a></li>
+<li><a href="das-team.html">Das Team</a></li>
+<li><a href="minecraft.html">Minecraft</a></li>
+<li><a href="sample-page-2.html">Projekt-Inhalte</a></li>
+<li><a href="warum-in-der-schule.html">Warum in der Schule?</a></li>
+</ul></li>
+<li><a href="infos-zu-minecraft.html">Infos zu Minecraft</a>
+<ul>
+<li><a href="minecraft-build-con.html">MineCraft Build-Con</a></li>
+<li><a href="mobel-bauen.html">Möbel bauen</a></li>
+<li><a href="tips-fur-admins.html">Tips für Admins</a>
+<ul>
+<li><a href="eigenen-server-aufbauen.html">Eigenen Server aufbauen</a></li>
+<li><a href="mapcrafter-einrichten.html">Mapcrafter einrichten</a></li>
+</ul></li>
+</ul></li>
+<li><a href="java.html">Java</a>
+<ul>
+<li><a href="das-erste-plugin.html">Das erste Plugin</a></li>
+<li><a href="die-programme.html">Die Programme</a></li>
+<li><a href="entwicklung-einrichten.html">Entwicklung einrichten</a></li>
+<li><a href="geomaptools-minecraft-plugin.html">geomaptools minecraft plugin</a></li>
+<li><a href="lokaler-server-zum-uben.html">Lokaler Server zum Üben</a></li>
+</ul></li>
+<li><a href="javascript.html">Javascript</a>
+<ul>
+<li><a href="blumenbeet-und-blumenkuebel.html">Blumenbeet und Blumenkuebel</a></li>
+<li><a href="ein-script-ausfuhren.html">Ein Script ausführen</a></li>
+<li><a href="hochhaus-bauen.html">Hochhaus bauen</a></li>
+<li><a href="mit-farben-bauen.html">Mit Farben bauen</a></li>
+<li><a href="wtc-twin-towers-bauen.html">WTC Twin Towers bauen</a></li>
+</ul></li>
+<li><a href="massstab-und-blocke.html">Messen und Bauen</a>
+<ul>
+<li><a href="massstab.html">Unser Massstab</a></li>
+</ul></li>
+<li><a href="datenschutzerklarung.html">Datenschutz</a></li>
+</ul>
+</nav>
+
+<div class="page-wrap">
 <header>
   <h1>&#9670; <span>Minecraft</span> Server Dashboard</h1>
   <div class="header-meta">
@@ -298,5 +368,6 @@
   setInterval(tickCountdown, 1000);
 </script>
 
+</div><!-- .page-wrap -->
 </body>
 </html>
