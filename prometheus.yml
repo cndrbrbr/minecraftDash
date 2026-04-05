@@ -12,11 +12,22 @@ scrape_configs:
         labels:
           server_name: "mc1"
 
+      - targets: ["mc2:9940"]
+        labels:
+          server_name: "mc2"
+
+      - targets: ["mc3:9940"]
+        labels:
+          server_name: "mc3"
+
+      - targets: ["mc4:9940"]
+        labels:
+          server_name: "mc4"
+
+      - targets: ["mc5:9940"]
+        labels:
+          server_name: "mc5"
+
       - targets: ["2.56.99.112:9940"]
         labels:
           server_name: "Soft"
-
-  # Weitere Server hier hinzufügen:
-  # - targets: ["mc2:9940"]
-  #   labels:
-  #     server_name: "mc2"
