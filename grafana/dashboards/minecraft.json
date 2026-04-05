@@ -271,7 +271,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "mc_jvm_memory{server_name=~\"$server\", type=\"allocated\"} - mc_jvm_memory{server_name=~\"$server\", type=\"free\"}",
+          "expr": "mc_jvm_memory{server_name=~\"$server\", type=\"allocated\"} - ignoring(type) mc_jvm_memory{server_name=~\"$server\", type=\"free\"}",
           "instant": true,
           "legendFormat": "Heap",
           "refId": "A"
@@ -469,7 +469,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "mc_jvm_memory_bytes_used{server_name=~\"$server\", area=\"heap\"}",
+          "expr": "mc_jvm_memory{server_name=~\"$server\", type=\"allocated\"} - ignoring(type) mc_jvm_memory{server_name=~\"$server\", type=\"free\"}",
           "legendFormat": "{{ server_name }} - Belegt",
           "refId": "A"
         },
