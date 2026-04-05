@@ -254,10 +254,4 @@ up{job="bungeecord"} == 0
 
 ---
 
-## 🚀 Empfehlung
 
-**Einfach:**
-- Uptime Kuma + Prometheus
-
-**Pro-Level:**
-- Prometheus + Grafana + Exporter + Discord Alerts
