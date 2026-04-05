@@ -140,7 +140,14 @@ if $OPT_CADDY && ! $OPT_DOWN; then
   write_caddyfile
 fi
 
-"${CMD[@]}"
+# Docker hat einen bekannten Timing-Bug: das Default-Netzwerk wird angelegt,
+# aber der letzte Container findet es kurz nicht. Einmal wiederholen reicht.
+if ! "${CMD[@]}"; then
+  echo ""
+  echo "Erster Versuch fehlgeschlagen (Docker-Netzwerk-Bug), starte neu..."
+  sleep 1
+  "${CMD[@]}"
+fi
 
 # ── Erreichbarkeit ausgeben ────────────────────────────────────────────────────
 if ! $OPT_DOWN; then
