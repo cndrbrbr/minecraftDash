@@ -10,6 +10,7 @@ Optional mit Caddy als Reverse Proxy (HTTP/HTTPS) und einer Server-Übersichts-H
 - [Einrichtung](#einrichtung)
 - [Setup-Script](#setup-script)
 - [Deployment-Modi](#deployment-modi)
+- [Homepage](#homepage--server-karten)
 - [Minecraft-Server einrichten](#minecraft-server-einrichten)
 - [Weiteren Server hinzufügen](#weiteren-server-hinzufügen)
 - [HTTPS einrichten](#https-einrichten)
@@ -37,7 +38,7 @@ Minecraft Server N  ──┘       ▲
                           └── Prometheus API Proxy
 ```
 
-Auf jedem Minecraft-Server läuft das Plugin **minecraft-prometheus-exporter**, das Metriken (Spieleranzahl, TPS, RAM) über HTTP bereitstellt. Prometheus sammelt diese Daten zentral ein. Grafana visualisiert sie und sendet Alerts an Discord.
+Auf jedem Minecraft-Server läuft das Plugin **minecraft-prometheus-exporter**, das Metriken (Spieleranzahl, TPS, RAM, Entities u. v. m.) über HTTP bereitstellt. Prometheus sammelt diese Daten zentral ein. Grafana visualisiert sie und sendet Alerts an Discord. Die Homepage zeigt alle Metriken live als Server-Karten an.
 
 ---
 
@@ -169,7 +170,41 @@ docker compose -f docker-compose.yml -f compose.caddy.yml -f compose.homepage.ym
 | Grafana    | http://localhost:3000 |
 | Prometheus | http://localhost:9090 |
 
-Die Homepage zeigt eine Live-Übersicht aller Server (online/offline, Spieler, TPS) und enthält die Projektdokumentation.
+Die Homepage zeigt eine Live-Übersicht aller Server und enthält die Projektdokumentation.
+
+### Homepage — Server-Karten
+
+Jede Server-Karte zeigt alle verfügbaren Prometheus-Metriken:
+
+| Bereich | Metriken |
+|---------|---------|
+| Header | Anzeigename (MOTD / servers.json / server_name), Version, Online-Badge |
+| Spieler & Performance | Spieler online, TPS (farbig: grün ≥18, gelb ≥15, rot <15), RAM benutzt / max |
+| Welt | Geladene Chunks, Entities, Whitelist-Einträge |
+| Tick-Timing | Median, Durchschnitt, Min, Max (in ms) |
+| JVM | Threads, GC-Events, Weltgröße |
+
+Die globale Zusammenfassung oben zeigt: Server online/offline, Spieler gesamt, Ø TPS, Entities gesamt.
+
+### Homepage — Anzeigenamen konfigurieren
+
+Der Anzeigename einer Server-Karte wird in dieser Priorität ermittelt:
+
+1. **MOTD** aus `mc_server_info` (automatisch, wenn im Plugin aktiviert — empfohlen)
+2. **`homepage/servers.json`** (manuelle Konfiguration als Fallback)
+3. **`server_name`**-Label aus `prometheus.yml`
+
+`homepage/servers.json` bearbeiten um manuelle Namen zu setzen:
+
+```json
+{
+  "mm-lobby": "Lobby",
+  "mm-mc1":   "Welt 1",
+  "mm-mc2":   "Welt 2"
+}
+```
+
+Für automatische MOTD-Anzeige muss `server_info: true` in der Plugin-Konfiguration gesetzt sein (siehe [Plugin konfigurieren](#2-plugin-konfigurieren)).
 
 ---
 
@@ -191,14 +226,35 @@ Download: [github.com/sladkoff/minecraft-prometheus-exporter/releases](https://g
 ### 2. Plugin konfigurieren
 
 Nach dem ersten Start erstellt das Plugin die Datei `plugins/PrometheusExporter/config.yml`.
-Standardmäßig bindet es auf `localhost` — für externe Zugriffe auf `0.0.0.0` ändern:
+Für maximale Metrik-Abdeckung (alle Felder aktivieren, MOTD für Homepage):
 
 ```yaml
 host: 0.0.0.0
 port: 9940
+enable_metrics:
+  server_info: true          # MOTD + Version → wird in der Homepage angezeigt
+  entities_total: true
+  villagers_total: true
+  loaded_chunks_total: true
+  jvm_memory: true
+  players_online_total: true
+  players_total: true
+  whitelisted_players: true
+  tps: true
+  world_size: true
+  jvm_threads: true
+  jvm_gc: true
+  tick_duration_median: true
+  tick_duration_average: true
+  tick_duration_min: true
+  tick_duration_max: true
+  player_online: true
+  player_statistic: true
 ```
 
 Server neu laden: `/reload` oder Neustart.
+
+> **Hinweis:** Ohne `server_info: true` zeigt die Homepage den `server_name`-Label aus `prometheus.yml` bzw. den Eintrag aus `homepage/servers.json` als Anzeigenamen.
 
 ### 3. Firewall
 
@@ -436,7 +492,8 @@ minecraftDash/
 ├── setup.sh                                  # Setup-Script (Parameter: --caddy, --homepage, --domain)
 ├── prometheus.yml                            # Scrape-Konfiguration (Server hier eintragen)
 ├── homepage/                                 # Statische Website
-│   ├── index.html                            # Server-Übersicht (live via Prometheus)
+│   ├── index.html                            # Server-Übersicht (live via Prometheus, alle Metriken)
+│   ├── servers.json                          # Anzeigenamen je server_name (Fallback wenn kein MOTD)
 │   ├── *.html                                # Projektdokumentation (34 Seiten)
 │   └── images/                              # Bilder
 ├── grafana/
