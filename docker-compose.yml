@@ -47,6 +47,23 @@ services:
       - ./grafana/dashboards:/var/lib/grafana/dashboards
       - grafana-data:/var/lib/grafana
 
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./homepage:/srv:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - prometheus
+
 volumes:
   mc-data:
   grafana-data:
+  caddy-data:
+  caddy-config:

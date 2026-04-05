@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minecraft Server Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f0f13;
+      --card-bg:   #1a1a24;
+      --border:    #2a2a3a;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --green:     #4ade80;
+      --yellow:    #facc15;
+      --red:       #f87171;
+      --accent:    #6366f1;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: .5rem;
+    }
+
+    header h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: .03em;
+      color: var(--text);
+    }
+
+    header h1 span { color: var(--accent); }
+
+    .header-meta {
+      font-size: .8rem;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    main { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+
+    /* ── Summary cards ── */
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: .75rem;
+      padding: 1.25rem 1.5rem;
+      text-align: center;
+    }
+
+    .stat-card .label {
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: .4rem;
+    }
+
+    .stat-card .value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .stat-card.online  .value { color: var(--green); }
+    .stat-card.offline .value { color: var(--red); }
+    .stat-card.players .value { color: var(--accent); }
+
+    /* ── Server grid ── */
+    .section-title {
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .server-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .server-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--border);
+      border-radius: .75rem;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+
+    .server-card.up   { border-left-color: var(--green); }
+    .server-card.down { border-left-color: var(--red);   }
+
+    .server-name {
+      font-weight: 600;
+      font-size: .95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      padding: .15rem .5rem;
+      border-radius: 999px;
+      width: fit-content;
+    }
+
+    .badge-up   { background: #16532d; color: var(--green); }
+    .badge-down { background: #450a0a; color: var(--red);   }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      font-size: .85rem;
+    }
+
+    .metric .label { color: var(--muted); }
+    .metric .value { font-weight: 600; }
+
+    .loading {
+      color: var(--muted);
+      text-align: center;
+      padding: 3rem;
+      font-size: .9rem;
+    }
+
+    .error {
+      color: var(--red);
+      background: #450a0a;
+      border: 1px solid var(--red);
+      border-radius: .5rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      font-size: .85rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>&#9670; <span>Minecraft</span> Server Dashboard</h1>
+  <div class="header-meta">
+    <div id="last-updated">Lade...</div>
+    <div id="countdown"></div>
+  </div>
+</header>
+
+<main>
+  <div id="error-box"></div>
+
+  <div class="summary">
+    <div class="stat-card online">
+      <div class="label">Online</div>
+      <div class="value" id="total-online">—</div>
+    </div>
+    <div class="stat-card offline">
+      <div class="label">Offline</div>
+      <div class="value" id="total-offline">—</div>
+    </div>
+    <div class="stat-card players">
+      <div class="label">Spieler gesamt</div>
+      <div class="value" id="total-players">—</div>
+    </div>
+  </div>
+
+  <div class="section-title">Server</div>
+  <div class="server-grid" id="server-grid">
+    <div class="loading">Verbinde mit Prometheus...</div>
+  </div>
+</main>
+
+<script>
+  const PROMETHEUS = '/api/prometheus/api/v1/query';
+  const REFRESH_INTERVAL = 15;
+  let countdown = REFRESH_INTERVAL;
+
+  async function query(expr) {
+    const res = await fetch(`${PROMETHEUS}?query=${encodeURIComponent(expr)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    return json.data.result;
+  }
+
+  function tpsColor(tps) {
+    if (tps === null) return 'var(--muted)';
+    if (tps >= 18)    return 'var(--green)';
+    if (tps >= 15)    return 'var(--yellow)';
+    return 'var(--red)';
+  }
+
+  async function refresh() {
+    const errorBox = document.getElementById('error-box');
+    try {
+      const [upData, playerData, tpsData] = await Promise.all([
+        query('up{job="minecraft"}'),
+        query('sum by (server_name) (mc_players_online_total)'),
+        query('mc_tps'),
+      ]);
+
+      errorBox.innerHTML = '';
+
+      // Build server map
+      const servers = {};
+
+      for (const r of upData) {
+        const name = r.metric.server_name || r.metric.instance;
+        servers[name] = { up: parseFloat(r.value[1]) === 1, players: 0, tps: null };
+      }
+
+      for (const r of playerData) {
+        const name = r.metric.server_name;
+        if (servers[name] !== undefined) servers[name].players = parseInt(r.value[1], 10);
+      }
+
+      for (const r of tpsData) {
+        const name = r.metric.server_name;
+        if (servers[name] !== undefined) servers[name].tps = parseFloat(r.value[1]);
+      }
+
+      // Summary
+      const vals = Object.values(servers);
+      document.getElementById('total-online').textContent  = vals.filter(s => s.up).length;
+      document.getElementById('total-offline').textContent = vals.filter(s => !s.up).length;
+      document.getElementById('total-players').textContent = vals.reduce((a, s) => a + (s.up ? s.players : 0), 0);
+
+      // Server grid
+      const grid = document.getElementById('server-grid');
+      if (Object.keys(servers).length === 0) {
+        grid.innerHTML = '<div class="loading">Keine Server in Prometheus konfiguriert.</div>';
+        return;
+      }
+
+      grid.innerHTML = Object.entries(servers)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([name, s]) => `
+          <div class="server-card ${s.up ? 'up' : 'down'}">
+            <div class="server-name">${name}</div>
+            <div class="badge ${s.up ? 'badge-up' : 'badge-down'}">${s.up ? 'ONLINE' : 'OFFLINE'}</div>
+            <div class="metric">
+              <span class="label">Spieler</span>
+              <span class="value">${s.up ? s.players : '—'}</span>
+            </div>
+            <div class="metric">
+              <span class="label">TPS</span>
+              <span class="value" style="color:${tpsColor(s.tps)}">${s.tps !== null ? s.tps.toFixed(1) : '—'}</span>
+            </div>
+          </div>
+        `).join('');
+
+      document.getElementById('last-updated').textContent =
+        'Aktualisiert: ' + new Date().toLocaleTimeString('de-DE');
+
+    } catch (err) {
+      errorBox.innerHTML = `<div class="error">Fehler beim Laden der Daten: ${err.message}</div>`;
+    }
+  }
+
+  // Countdown display
+  function tickCountdown() {
+    document.getElementById('countdown').textContent = `Nächste Aktualisierung in ${countdown}s`;
+    if (--countdown < 0) {
+      countdown = REFRESH_INTERVAL;
+      refresh();
+    }
+  }
+
+  refresh();
+  setInterval(tickCountdown, 1000);
+</script>
+
+</body>
+</html>
