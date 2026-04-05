@@ -1,0 +1,12 @@
+# grafana rule ideas / PromQL
+# 1) Backend down
+max(up{job="minecraft",server_name="survival-1"}) < 1
+
+# 2) TPS zu niedrig
+avg_over_time(mc_tps{server_name="survival-1"}[2m]) < 18
+
+# 3) MSPT kritisch
+avg_over_time((mc_tick_duration_average{server_name="survival-1"} / 1000000)[2m]) > 50
+
+# 4) Proxy down
+max(up{job="bungeecord",proxy_name="proxy-1"}) < 1
