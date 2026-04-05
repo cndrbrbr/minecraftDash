@@ -1,0 +1,9 @@
+- job_name: 'bungeecord'
+  scrape_interval: 5s
+  static_configs:
+    - targets: ['proxy1.example.net:9985']
+      labels:
+        proxy_name: 'proxy1'
+    - targets: ['proxy2.example.net:9985']
+      labels:
+        proxy_name: 'proxy2'
