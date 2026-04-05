@@ -1,6 +1,6 @@
 # 🧱 Minecraft Monitoring Architektur (Prometheus + Grafana)
 
-## 📌 Übersicht
+## Übersicht
 
 Dieses Setup überwacht mehrere Minecraft-Server (Proxy + Backends) mit:
 
