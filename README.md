@@ -1,17 +1,22 @@
 # minecraftDash
 
 Zentrale Überwachung mehrerer Minecraft-Server mit Prometheus, Grafana und Discord-Alerts.
+Optional mit Caddy als Reverse Proxy (HTTP/HTTPS) und einer Server-Übersichts-Homepage.
 
 ## Inhalt
 
 - [Architektur](#architektur)
 - [Voraussetzungen](#voraussetzungen)
-- [Schnellstart (lokal)](#schnellstart-lokal)
+- [Einrichtung](#einrichtung)
+- [Deployment-Modi](#deployment-modi)
 - [Minecraft-Server einrichten](#minecraft-server-einrichten)
 - [Weiteren Server hinzufügen](#weiteren-server-hinzufügen)
+- [HTTPS einrichten](#https-einrichten)
 - [Discord-Alerts einrichten](#discord-alerts-einrichten)
 - [Grafana-Dashboard](#grafana-dashboard)
+- [Firewall (iptables)](#firewall-iptables)
 - [Verzeichnisstruktur](#verzeichnisstruktur)
+- [Nützliche Befehle](#nützliche-befehle)
 
 ---
 
@@ -24,8 +29,11 @@ Minecraft Server 1  ──┐
 Minecraft Server 2  ──▶  Prometheus  ──▶  Grafana  ──▶  Discord
   (Plugin :9940)      │   (:9090)          (:3000)       (Alerts)
                       │
-Minecraft Server N  ──┘
-  (Plugin :9940)
+Minecraft Server N  ──┘       ▲
+  (Plugin :9940)               │
+                          Caddy (:80/:443)
+                          └── Homepage (Server-Übersicht)
+                          └── Prometheus API Proxy
 ```
 
 Auf jedem Minecraft-Server läuft das Plugin **minecraft-prometheus-exporter**, das Metriken (Spieleranzahl, TPS, RAM) über HTTP bereitstellt. Prometheus sammelt diese Daten zentral ein. Grafana visualisiert sie und sendet Alerts an Discord.
@@ -39,74 +47,90 @@ Auf jedem Minecraft-Server läuft das Plugin **minecraft-prometheus-exporter**, 
 
 ---
 
-## Firewall (iptables)
+## Einrichtung
 
-Docker-published Ports umgehen die `INPUT`-Chain. Regeln für Docker-Container gehören in die `DOCKER-USER`-Chain.
-
-```bash
-# Platzhalter ersetzen:
-ADMIN_IP="<IP_DES_ADMINS>"   # z. B. 1.2.3.4
-
-# ── Grafana (container-intern: 3000) ─────────────────────────
-# Nur der Admin darf auf das Dashboard zugreifen.
-iptables -I DOCKER-USER -p tcp --dport 3000 -s "$ADMIN_IP" -j ACCEPT
-iptables -I DOCKER-USER -p tcp --dport 3000 -j DROP
-
-# ── Prometheus (container-intern: 9090) ──────────────────────
-# Nur lokal / Admin erreichbar — nicht öffentlich.
-iptables -I DOCKER-USER -p tcp --dport 9090 -s 127.0.0.1   -j ACCEPT
-iptables -I DOCKER-USER -p tcp --dport 9090 -s "$ADMIN_IP" -j ACCEPT
-iptables -I DOCKER-USER -p tcp --dport 9090 -j DROP
-
-# ── Test-Minecraft (container-intern: 25565, Host-Port 25570) ─
-# Nur lokal erreichbar — nicht öffentlich.
-iptables -I DOCKER-USER -p tcp --dport 25565 -s 127.0.0.1 -j ACCEPT
-iptables -I DOCKER-USER -p tcp --dport 25565 -j DROP
-
-# ── Ausgehend zu Minecraft-Servern (Port 9940) ────────────────
-# Prometheus muss die Exporter-Endpunkte der MC-Server erreichen.
-# Ausgehender Traffic ist standardmäßig erlaubt (OUTPUT ACCEPT).
-# Nur nötig, falls die OUTPUT-Chain eingeschränkt ist:
-# iptables -A OUTPUT -p tcp --dport 9940 -j ACCEPT
-```
-
-> **Regeln dauerhaft speichern** (Debian/Ubuntu):
-> ```bash
-> apt install iptables-persistent
-> netfilter-persistent save
-> ```
-
-> **Regeln prüfen:**
-> ```bash
-> iptables -L DOCKER-USER -n --line-numbers
-> ```
-
-> **Einzelne Regel entfernen** (Zeilennummer aus obigem Befehl):
-> ```bash
-> iptables -D DOCKER-USER <nummer>
-> ```
-
----
-
-## Schnellstart (lokal)
+### 1. Repository klonen
 
 ```bash
 git clone https://github.com/cndrbrbr/minecraftDash.git
 cd minecraftDash
+```
 
-# Discord-Webhook eintragen (optional, für Alerts)
-# grafana/provisioning/alerting/contactpoints.yaml bearbeiten
+### 2. Server eintragen
 
+`prometheus.yml` öffnen und Minecraft-Server als Targets eintragen:
+
+```yaml
+scrape_configs:
+  - job_name: "minecraft"
+    static_configs:
+      - targets: ["185.170.113.136:9941"]
+        labels:
+          server_name: "mc1"
+
+      - targets: ["185.170.113.136:9942"]
+        labels:
+          server_name: "mc2"
+```
+
+### 3. Discord-Webhook eintragen (optional)
+
+`grafana/provisioning/alerting/contactpoints.yaml` öffnen:
+
+```yaml
+settings:
+  url: "https://discord.com/api/webhooks/DEINE_WEBHOOK_URL"
+```
+
+### 4. Stack starten
+
+Gewünschten [Deployment-Modus](#deployment-modi) wählen und starten.
+
+---
+
+## Deployment-Modi
+
+Der Stack ist parametrisiert — Caddy und Homepage sind optional zuschaltbar.
+
+### Modus 1 — Core (Prometheus + Grafana + Test-Minecraft)
+
+```bash
 docker compose up -d
 ```
 
-| Dienst     | URL                      | Zugangsdaten  |
-|------------|--------------------------|---------------|
-| Grafana    | http://localhost:3000    | admin / admin |
-| Prometheus | http://localhost:9090    | —             |
-| Minecraft  | localhost:25570          | Offline-Modus |
+| Dienst     | URL                   | Zugangsdaten  |
+|------------|-----------------------|---------------|
+| Grafana    | http://localhost:3000 | admin / admin |
+| Prometheus | http://localhost:9090 | —             |
+| Minecraft  | localhost:25570       | Offline-Modus |
 
-> Der Minecraft-Server startet beim ersten Start etwas langsamer, da Spigot heruntergeladen wird.
+### Modus 2 — Core + Caddy (HTTP/HTTPS Reverse Proxy)
+
+```bash
+docker compose -f docker-compose.yml -f compose.caddy.yml up -d
+```
+
+| Dienst     | URL                   |
+|------------|-----------------------|
+| Caddy      | http://localhost      |
+| Grafana    | http://localhost:3000 |
+| Prometheus | http://localhost:9090 |
+
+### Modus 3 — Core + Caddy + Homepage
+
+```bash
+docker compose -f docker-compose.yml -f compose.caddy.yml -f compose.homepage.yml up -d
+```
+
+| Dienst     | URL                   |
+|------------|-----------------------|
+| Homepage   | http://localhost      |
+| Grafana    | http://localhost:3000 |
+| Prometheus | http://localhost:9090 |
+
+Die Homepage zeigt eine Live-Übersicht aller Server (online/offline, Spieler, TPS) und enthält die Projektdokumentation.
+
+> **Hinweis:** Der Minecraft-Test-Server startet beim ersten Start langsamer, da Spigot heruntergeladen wird.
 > Status prüfen: `docker logs -f minecraft`
 
 ---
@@ -154,7 +178,7 @@ ufw allow from <monitoring-server-ip> to any port 9940
 
 ### Voraussetzungen auf dem Minecraft-Server
 
-Bevor ein Server in Prometheus eingetragen wird, muss dort das Plugin laufen und von außen erreichbar sein (siehe [Minecraft-Server einrichten](#minecraft-server-einrichten)).
+Bevor ein Server in Prometheus eingetragen wird, muss dort das Plugin laufen und von außen erreichbar sein.
 
 Status prüfen:
 ```bash
@@ -166,19 +190,12 @@ Gibt die Seite Metriken zurück, ist der Server bereit.
 
 ### Szenario 1 — Externer Server (Internet)
 
-Der Server läuft irgendwo im Internet und ist über eine öffentliche IP oder Domain erreichbar.
-
 **`prometheus.yml` ergänzen:**
 
 ```yaml
 scrape_configs:
   - job_name: "minecraft"
     static_configs:
-      - targets: ["minecraft:9940"]
-        labels:
-          server_name: "local-test"
-
-      # Neuer externer Server:
       - targets: ["mein-server.example.com:9940"]
         labels:
           server_name: "survival"
@@ -186,7 +203,6 @@ scrape_configs:
 
 **Firewall auf dem Minecraft-Server:**
 ```bash
-# Nur die IP des Monitoring-Servers erlauben
 ufw allow from <monitoring-ip> to any port 9940
 ```
 
@@ -196,35 +212,13 @@ ufw allow from <monitoring-ip> to any port 9940
 
 Der Server läuft als Docker-Container auf demselben Host (z. B. aus [minecraftHostingServer](https://github.com/cndrbrbr/minecraftHostingServer)).
 
-Da der Prometheus-Container standardmäßig nur im `mcdash`-Netzwerk ist, muss er einmalig mit dem Netzwerk des anderen Stacks verbunden werden:
+Prometheus einmalig mit dem anderen Docker-Netzwerk verbinden:
 
-```bash
-# Einmalig ausführen — verbindet Prometheus mit dem anderen Docker-Netzwerk
-docker network connect <netzwerk-name> prometheus
-
-# Netzwerkname herausfinden:
-docker network ls
-```
-
-Beispiel für minecraftHostingServer:
 ```bash
 docker network connect minecrafthostingserver_default prometheus
 ```
 
-**`prometheus.yml` ergänzen** — Container-Name als Hostname:
-
-```yaml
-      - targets: ["mc1:9940"]
-        labels:
-          server_name: "mc1"
-
-      - targets: ["mc2:9940"]
-        labels:
-          server_name: "mc2"
-```
-
-> Die `docker network connect`-Verbindung geht beim Neustart des Prometheus-Containers verloren.
-> Um sie dauerhaft zu machen, das Netzwerk in `docker-compose.yml` unter `prometheus` eintragen:
+> Dauerhaft machen — in `docker-compose.yml` unter `prometheus` eintragen:
 >
 > ```yaml
 > prometheus:
@@ -239,12 +233,19 @@ docker network connect minecrafthostingserver_default prometheus
 >     external: true
 > ```
 
+**`prometheus.yml` ergänzen** — Container-Name als Hostname:
+
+```yaml
+      - targets: ["mc1:9940"]
+        labels:
+          server_name: "mc1"
+```
+
 ---
 
 ### Szenario 3 — Lokaler Server, Port nach außen gemappt
 
 Port 9940 des Containers ist auf einen Host-Port gemappt (z. B. `9941:9940`).
-Prometheus erreicht ihn dann über `host.docker.internal` oder die Host-IP:
 
 ```yaml
       - targets: ["host.docker.internal:9941"]
@@ -259,16 +260,41 @@ Prometheus erreicht ihn dann über `host.docker.internal` oder die Host-IP:
 Nach jeder Änderung an `prometheus.yml`:
 
 ```bash
-./restart-prometheus.sh
-```
-
-oder manuell:
-
-```bash
 docker compose restart prometheus
 ```
 
 Das Grafana-Dashboard erkennt neue Server automatisch über die `server_name`-Variable.
+
+---
+
+## HTTPS einrichten
+
+Caddy holt automatisch ein Let's Encrypt-Zertifikat sobald eine Domain konfiguriert ist.
+
+### 1. Domain auf Server-IP zeigen lassen (DNS A-Record)
+
+### 2. Caddyfile anpassen
+
+Den kommentierten HTTPS-Block in `Caddyfile` aktivieren und Domain eintragen:
+
+```
+yourdomain.com {
+    root * /srv
+    file_server
+
+    handle_path /api/prometheus/* {
+        reverse_proxy prometheus:9090
+    }
+}
+```
+
+Den `:80`-Block entfernen oder behalten (Caddy leitet dann automatisch auf HTTPS um).
+
+### 3. Caddy neu starten
+
+```bash
+docker compose -f docker-compose.yml -f compose.caddy.yml -f compose.homepage.yml restart caddy
+```
 
 ---
 
@@ -281,7 +307,7 @@ Webhook-URL kopieren.
 
 ### 2. URL eintragen
 
-Datei `grafana/provisioning/alerting/contactpoints.yaml` öffnen und URL eintragen:
+Datei `grafana/provisioning/alerting/contactpoints.yaml` öffnen:
 
 ```yaml
 settings:
@@ -296,10 +322,10 @@ docker compose restart grafana
 
 ### Vorkonfigurierte Alerts
 
-| Alert          | Bedingung              | Schwere  |
-|----------------|------------------------|----------|
-| Server Down    | Server nicht erreichbar für 2 min | critical |
-| TPS zu niedrig | TPS < 15 für 5 min     | warning  |
+| Alert          | Bedingung                             | Schwere  |
+|----------------|---------------------------------------|----------|
+| Server Down    | Server nicht erreichbar für 2 min     | critical |
+| TPS zu niedrig | TPS < 15 für 5 min                    | warning  |
 
 Weitere Alerts können in `grafana/provisioning/alerting/rules.yaml` ergänzt werden.
 
@@ -327,27 +353,73 @@ Oben im Dashboard befindet sich ein Dropdown **"Server"** zum Filtern auf einzel
 
 ---
 
+## Firewall (iptables)
+
+Docker-published Ports umgehen die `INPUT`-Chain. Regeln für Docker-Container gehören in die `DOCKER-USER`-Chain.
+
+```bash
+ADMIN_IP="<IP_DES_ADMINS>"   # z. B. 1.2.3.4
+
+# ── Grafana (3000) — nur Admin ────────────────────────────────
+iptables -I DOCKER-USER -p tcp --dport 3000 -s "$ADMIN_IP" -j ACCEPT
+iptables -I DOCKER-USER -p tcp --dport 3000 -j DROP
+
+# ── Prometheus (9090) — nur lokal / Admin ─────────────────────
+iptables -I DOCKER-USER -p tcp --dport 9090 -s 127.0.0.1   -j ACCEPT
+iptables -I DOCKER-USER -p tcp --dport 9090 -s "$ADMIN_IP" -j ACCEPT
+iptables -I DOCKER-USER -p tcp --dport 9090 -j DROP
+
+# ── Caddy (80/443) — öffentlich ───────────────────────────────
+# Caddy selbst entscheidet, wer was sehen darf.
+# Keine Einschränkung nötig — Port 80/443 muss offen sein.
+
+# ── Test-Minecraft (25570) — nur lokal ───────────────────────
+iptables -I DOCKER-USER -p tcp --dport 25570 -s 127.0.0.1 -j ACCEPT
+iptables -I DOCKER-USER -p tcp --dport 25570 -j DROP
+```
+
+**Regeln dauerhaft speichern** (Debian/Ubuntu):
+```bash
+apt install iptables-persistent
+netfilter-persistent save
+```
+
+**Regeln prüfen:**
+```bash
+iptables -L DOCKER-USER -n --line-numbers
+```
+
+---
+
 ## Verzeichnisstruktur
 
 ```
 minecraftDash/
-├── docker-compose.yml                        # Stack-Definition
+├── docker-compose.yml                        # Core-Stack (Prometheus, Grafana, Minecraft)
+├── compose.caddy.yml                         # Opt-in: Caddy Reverse Proxy
+├── compose.homepage.yml                      # Opt-in: Homepage (benötigt compose.caddy.yml)
+├── Caddyfile                                 # Caddy-Konfiguration (HTTP + HTTPS-Vorlage)
 ├── prometheus.yml                            # Scrape-Konfiguration (Server hier eintragen)
+├── homepage/                                 # Statische Website
+│   ├── index.html                            # Server-Übersicht (live via Prometheus)
+│   ├── *.html                                # Projektdokumentation (34 Seiten)
+│   └── images/                              # Bilder
 ├── plugins/
-│   └── minecraft-prometheus-exporter.jar     # Spigot-Plugin
+│   └── minecraft-prometheus-exporter.jar    # Spigot-Plugin
 ├── grafana/
+│   ├── grafana.ini                           # Grafana-Konfiguration
 │   ├── dashboards/
-│   │   └── minecraft.json                    # Dashboard-Definition
+│   │   └── minecraft.json                   # Dashboard-Definition
 │   └── provisioning/
 │       ├── datasources/
-│       │   └── prometheus.yaml               # Prometheus als Datenquelle
+│       │   └── prometheus.yaml              # Prometheus als Datenquelle
 │       ├── dashboards/
-│       │   └── dashboards.yaml               # Dashboard-Loader
+│       │   └── dashboards.yaml              # Dashboard-Loader
 │       └── alerting/
-│           ├── contactpoints.yaml            # Discord-Webhook (hier URL eintragen)
-│           ├── policies.yaml                 # Alert-Routing
-│           └── rules.yaml                    # Alert-Regeln
-└── architecture.md                           # Detaillierte Architektur-Dokumentation
+│           ├── contactpoints.yaml           # Discord-Webhook (hier URL eintragen)
+│           ├── policies.yaml                # Alert-Routing
+│           └── rules.yaml                   # Alert-Regeln
+└── architecture.md                          # Detaillierte Architektur-Dokumentation
 ```
 
 ---
@@ -355,8 +427,11 @@ minecraftDash/
 ## Nützliche Befehle
 
 ```bash
-# Stack starten
+# Stack starten (Core)
 docker compose up -d
+
+# Stack starten (Core + Caddy + Homepage)
+docker compose -f docker-compose.yml -f compose.caddy.yml -f compose.homepage.yml up -d
 
 # Stack stoppen
 docker compose down
@@ -365,6 +440,7 @@ docker compose down
 docker logs -f minecraft
 docker logs -f prometheus
 docker logs -f grafana
+docker logs -f caddy
 
 # Minecraft-Konsole (RCON)
 docker exec -it minecraft rcon-cli --host localhost --port 25575 --password testpass123
@@ -374,4 +450,7 @@ docker compose restart prometheus
 
 # Metriken direkt prüfen
 curl http://localhost:9940/metrics
+
+# Caddy neu laden (nach Änderung am Caddyfile)
+docker exec caddy caddy reload --config /etc/caddy/Caddyfile
 ```
