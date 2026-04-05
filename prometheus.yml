@@ -28,6 +28,22 @@ scrape_configs:
         labels:
           server_name: "mc5"
 
-      - targets: ["2.56.99.112:9940"]
+      - targets: ["2.56.99.112:9941"]
         labels:
-          server_name: "Soft"
+          server_name: "soft-mc1"
+
+      - targets: ["2.56.99.112:9942"]
+        labels:
+          server_name: "soft-mc2"
+
+      - targets: ["2.56.99.112:9943"]
+        labels:
+          server_name: "soft-mc3"
+
+      - targets: ["2.56.99.112:9944"]
+        labels:
+          server_name: "soft-mc4"
+
+      - targets: ["2.56.99.112:9945"]
+        labels:
+          server_name: "soft-mc5"
