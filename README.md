@@ -455,18 +455,20 @@ Docker-published Ports umgehen die `INPUT`-Chain. Regeln für Docker-Container g
 ADMIN_IP="<IP_DES_ADMINS>"   # z. B. 1.2.3.4
 
 # ── Grafana (3000) — nur Admin ────────────────────────────────
-iptables -I DOCKER-USER -p tcp --dport 3000 -s "$ADMIN_IP" -j ACCEPT
-iptables -I DOCKER-USER -p tcp --dport 3000 -j DROP
+iptables -A DOCKER-USER -p tcp --dport 3000 -s "$ADMIN_IP" -j ACCEPT
+iptables -A DOCKER-USER -p tcp --dport 3000 -j DROP
 
 # ── Prometheus (9090) — nur lokal / Admin ─────────────────────
-iptables -I DOCKER-USER -p tcp --dport 9090 -s 127.0.0.1   -j ACCEPT
-iptables -I DOCKER-USER -p tcp --dport 9090 -s "$ADMIN_IP" -j ACCEPT
-iptables -I DOCKER-USER -p tcp --dport 9090 -j DROP
+iptables -A DOCKER-USER -p tcp --dport 9090 -s 127.0.0.1   -j ACCEPT
+iptables -A DOCKER-USER -p tcp --dport 9090 -s "$ADMIN_IP" -j ACCEPT
+iptables -A DOCKER-USER -p tcp --dport 9090 -j DROP
 
 # ── Caddy (80/443) — öffentlich ───────────────────────────────
 # Caddy selbst entscheidet, wer was sehen darf.
 # Keine Einschränkung nötig — Port 80/443 muss offen sein.
 ```
+
+> **Wichtig:** `-A` (append) statt `-I` (insert) verwenden — sonst landet DROP vor ACCEPT und alles wird geblockt.
 
 **Regeln dauerhaft speichern** (Debian/Ubuntu):
 ```bash
