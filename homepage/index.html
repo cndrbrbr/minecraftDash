@@ -273,11 +273,13 @@
   const REFRESH_INTERVAL = 15;
   let countdown = REFRESH_INTERVAL;
   let serverNames = {};
+  let motdNames = {};
 
   fetch('servers.json').then(r => r.json()).then(d => { serverNames = d; }).catch(() => {});
 
+  // displayName priority: mc_server_info motd > servers.json > server_name
   function displayName(id) {
-    return serverNames[id] || id;
+    return motdNames[id] || serverNames[id] || id;
   }
 
   async function query(expr) {
@@ -297,10 +299,11 @@
   async function refresh() {
     const errorBox = document.getElementById('error-box');
     try {
-      const [upData, playerData, tpsData] = await Promise.all([
+      const [upData, playerData, tpsData, infoData] = await Promise.all([
         query('up{job="minecraft"}'),
         query('sum by (server_name) (mc_players_online_total)'),
         query('mc_tps'),
+        query('mc_server_info'),
       ]);
 
       errorBox.innerHTML = '';
@@ -321,6 +324,13 @@
       for (const r of tpsData) {
         const name = r.metric.server_name;
         if (servers[name] !== undefined) servers[name].tps = parseFloat(r.value[1]);
+      }
+
+      // MOTD aus mc_server_info (benötigt enabled: true im Plugin)
+      motdNames = {};
+      for (const r of infoData) {
+        const name = r.metric.server_name;
+        if (r.metric.motd) motdNames[name] = r.metric.motd;
       }
 
       // Summary
