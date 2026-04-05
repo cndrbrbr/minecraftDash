@@ -205,10 +205,33 @@ Die globale Zusammenfassung oben zeigt: Server online/offline, Spieler gesamt, �
 Der Anzeigename einer Server-Karte wird in dieser Priorität ermittelt:
 
 1. **MOTD** aus `mc_server_info` (automatisch, wenn im Plugin aktiviert — empfohlen)
-2. **`homepage/servers.json`** (manuelle Konfiguration als Fallback)
+2. **`homepage/servers.json`** (manuell oder per Script befüllt)
 3. **`server_name`**-Label aus `prometheus.yml`
 
-`homepage/servers.json` bearbeiten um manuelle Namen zu setzen:
+#### MOTD automatisch aus server.properties lesen
+
+Das Script `update-server-names.py` liest die MOTD direkt aus `server.properties` der lokalen Docker-Container und schreibt sie in `homepage/servers.json`:
+
+```bash
+python3 update-server-names.py
+```
+
+Das Script gleicht alle Targets aus `prometheus.yml` mit laufenden Docker-Containern ab (anhand des Host-Ports), liest deren `motd=`-Eintrag und aktualisiert `servers.json`. Remote-Server (kein lokaler Container) werden übersprungen.
+
+**Stündlich per Cron ausführen** (als root auf dem Monitoring-Server):
+
+```bash
+crontab -e
+```
+
+Eintrag:
+```
+0 * * * * cd /root/mcDashProject/minecraftDash && python3 update-server-names.py
+```
+
+#### Manuelle Konfiguration
+
+`homepage/servers.json` direkt bearbeiten:
 
 ```json
 {
@@ -217,8 +240,6 @@ Der Anzeigename einer Server-Karte wird in dieser Priorität ermittelt:
   "mm-mc2":   "Welt 2"
 }
 ```
-
-Für automatische MOTD-Anzeige muss `server_info: true` in der Plugin-Konfiguration gesetzt sein (siehe [Plugin konfigurieren](#2-plugin-konfigurieren)).
 
 ---
 
@@ -506,6 +527,7 @@ minecraftDash/
 ├── compose.homepage.yml                      # Opt-in: Homepage (benötigt compose.caddy.yml)
 ├── Caddyfile                                 # Caddy-Konfiguration (HTTP + HTTPS-Vorlage)
 ├── setup.sh                                  # Setup-Script (Parameter: --caddy, --homepage, --domain)
+├── update-server-names.py                    # Liest MOTD aus Docker-Containern → servers.json
 ├── prometheus.yml                            # Scrape-Konfiguration (Server hier eintragen)
 ├── homepage/                                 # Statische Website
 │   ├── index.html                            # Server-Übersicht (live via Prometheus, alle Metriken)
