@@ -1,0 +1,23 @@
+# prometheus.yml
+global:
+  scrape_interval: 10s
+
+scrape_configs:
+  - job_name: "minecraft"
+    static_configs:
+      - targets: ["mc1.example.net:9940"]
+        labels:
+          server_name: "survival-1"
+      - targets: ["mc2.example.net:9940"]
+        labels:
+          server_name: "survival-2"
+
+  - job_name: "bungeecord"
+    scrape_interval: 5s
+    static_configs:
+      - targets: ["proxy1.example.net:9985"]
+        labels:
+          proxy_name: "proxy-1"
+      - targets: ["proxy2.example.net:9985"]
+        labels:
+          proxy_name: "proxy-2"
