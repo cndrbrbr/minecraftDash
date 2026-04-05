@@ -39,6 +39,55 @@ Auf jedem Minecraft-Server läuft das Plugin **minecraft-prometheus-exporter**, 
 
 ---
 
+## Firewall (iptables)
+
+Docker-published Ports umgehen die `INPUT`-Chain. Regeln für Docker-Container gehören in die `DOCKER-USER`-Chain.
+
+```bash
+# Platzhalter ersetzen:
+ADMIN_IP="<IP_DES_ADMINS>"   # z. B. 1.2.3.4
+
+# ── Grafana (container-intern: 3000) ─────────────────────────
+# Nur der Admin darf auf das Dashboard zugreifen.
+iptables -I DOCKER-USER -p tcp --dport 3000 -s "$ADMIN_IP" -j ACCEPT
+iptables -I DOCKER-USER -p tcp --dport 3000 -j DROP
+
+# ── Prometheus (container-intern: 9090) ──────────────────────
+# Nur lokal / Admin erreichbar — nicht öffentlich.
+iptables -I DOCKER-USER -p tcp --dport 9090 -s 127.0.0.1   -j ACCEPT
+iptables -I DOCKER-USER -p tcp --dport 9090 -s "$ADMIN_IP" -j ACCEPT
+iptables -I DOCKER-USER -p tcp --dport 9090 -j DROP
+
+# ── Test-Minecraft (container-intern: 25565, Host-Port 25570) ─
+# Nur lokal erreichbar — nicht öffentlich.
+iptables -I DOCKER-USER -p tcp --dport 25565 -s 127.0.0.1 -j ACCEPT
+iptables -I DOCKER-USER -p tcp --dport 25565 -j DROP
+
+# ── Ausgehend zu Minecraft-Servern (Port 9940) ────────────────
+# Prometheus muss die Exporter-Endpunkte der MC-Server erreichen.
+# Ausgehender Traffic ist standardmäßig erlaubt (OUTPUT ACCEPT).
+# Nur nötig, falls die OUTPUT-Chain eingeschränkt ist:
+# iptables -A OUTPUT -p tcp --dport 9940 -j ACCEPT
+```
+
+> **Regeln dauerhaft speichern** (Debian/Ubuntu):
+> ```bash
+> apt install iptables-persistent
+> netfilter-persistent save
+> ```
+
+> **Regeln prüfen:**
+> ```bash
+> iptables -L DOCKER-USER -n --line-numbers
+> ```
+
+> **Einzelne Regel entfernen** (Zeilennummer aus obigem Befehl):
+> ```bash
+> iptables -D DOCKER-USER <nummer>
+> ```
+
+---
+
 ## Schnellstart (lokal)
 
 ```bash
