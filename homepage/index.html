@@ -272,6 +272,13 @@
   const PROMETHEUS = '/api/prometheus/api/v1/query';
   const REFRESH_INTERVAL = 15;
   let countdown = REFRESH_INTERVAL;
+  let serverNames = {};
+
+  fetch('servers.json').then(r => r.json()).then(d => { serverNames = d; }).catch(() => {});
+
+  function displayName(id) {
+    return serverNames[id] || id;
+  }
 
   async function query(expr) {
     const res = await fetch(`${PROMETHEUS}?query=${encodeURIComponent(expr)}`);
@@ -333,7 +340,8 @@
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([name, s]) => `
           <div class="server-card ${s.up ? 'up' : 'down'}">
-            <div class="server-name">${name}</div>
+            <div class="server-name">${displayName(name)}</div>
+            <div style="font-size:.7rem;color:var(--muted);margin-top:-.3rem">${name}</div>
             <div class="badge ${s.up ? 'badge-up' : 'badge-down'}">${s.up ? 'ONLINE' : 'OFFLINE'}</div>
             <div class="metric">
               <span class="label">Spieler</span>
