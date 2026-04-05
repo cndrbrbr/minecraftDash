@@ -1,0 +1,90 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: Minecraft
+    folder: Minecraft
+    interval: 60s
+    rules:
+      - uid: mc-server-down
+        title: Server Down
+        condition: B
+        for: 2m
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: 'up{job="minecraft"}'
+              instant: true
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: "-100"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - type: query
+                  query:
+                    params: [A]
+                  reducer:
+                    type: last
+                    params: []
+                  evaluator:
+                    type: lt
+                    params: [1]
+                  operator:
+                    type: and
+        noDataState: Alerting
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.server_name }} ist DOWN"
+          description: "Minecraft Server {{ $labels.server_name }} antwortet nicht mehr."
+
+      - uid: mc-low-tps
+        title: TPS zu niedrig
+        condition: B
+        for: 5m
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: 'mc_tps{job="minecraft"}'
+              instant: true
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: "-100"
+            model:
+              type: classic_conditions
+              refId: B
+              conditions:
+                - type: query
+                  query:
+                    params: [A]
+                  reducer:
+                    type: last
+                    params: []
+                  evaluator:
+                    type: lt
+                    params: [15]
+                  operator:
+                    type: and
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: "TPS kritisch auf {{ $labels.server_name }}"
+          description: "TPS ist {{ $value }} (unter 15) auf {{ $labels.server_name }}."

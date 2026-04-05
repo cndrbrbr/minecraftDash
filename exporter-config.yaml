@@ -1,0 +1,5 @@
+rcon:
+  enable: true
+  host: "minecraft"
+  port: 25575
+  password: "${RCON_PASSWORD}"
