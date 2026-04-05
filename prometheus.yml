@@ -4,46 +4,42 @@ global:
 scrape_configs:
   - job_name: "minecraft"
     static_configs:
-      - targets: ["minecraft:9940"]
+      - targets: ["185.170.113.136:9941"]
         labels:
-          server_name: "local-test"
+          server_name: "mm-mc1"
 
-      - targets: ["mc1:9940"]
+      - targets: ["185.170.113.136:9942"]
         labels:
-          server_name: "mc1"
+          server_name: "mm-mc2"
 
-      - targets: ["mc2:9940"]
+      - targets: ["185.170.113.136:9943"]
         labels:
-          server_name: "mc2"
+          server_name: "mm-mc3"
 
-      - targets: ["mc3:9940"]
+      - targets: ["185.170.113.136:9944"]
         labels:
-          server_name: "mc3"
+          server_name: "mm-mc4"
 
-      - targets: ["mc4:9940"]
+      - targets: ["185.170.113.136:9945"]
         labels:
-          server_name: "mc4"
-
-      - targets: ["mc5:9940"]
-        labels:
-          server_name: "mc5"
+          server_name: "mm-mc5"
 
       - targets: ["2.56.99.112:9941"]
         labels:
-          server_name: "soft-mc1"
+          server_name: "nc3-mc1"
 
       - targets: ["2.56.99.112:9942"]
         labels:
-          server_name: "soft-mc2"
+          server_name: "nc3-mc2"
 
       - targets: ["2.56.99.112:9943"]
         labels:
-          server_name: "soft-mc3"
+          server_name: "nc3-mc3"
 
       - targets: ["2.56.99.112:9944"]
         labels:
-          server_name: "soft-mc4"
+          server_name: "nc3-mc4"
 
       - targets: ["2.56.99.112:9945"]
         labels:
-          server_name: "soft-mc5"
+          server_name: "nc3-mc5"
