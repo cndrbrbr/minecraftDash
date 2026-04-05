@@ -8,6 +8,7 @@ Optional mit Caddy als Reverse Proxy (HTTP/HTTPS) und einer Server-Übersichts-H
 - [Architektur](#architektur)
 - [Voraussetzungen](#voraussetzungen)
 - [Einrichtung](#einrichtung)
+- [Setup-Script](#setup-script)
 - [Deployment-Modi](#deployment-modi)
 - [Minecraft-Server einrichten](#minecraft-server-einrichten)
 - [Weiteren Server hinzufügen](#weiteren-server-hinzufügen)
@@ -84,13 +85,54 @@ settings:
 
 ### 4. Stack starten
 
-Gewünschten [Deployment-Modus](#deployment-modi) wählen und starten.
+Gewünschten [Deployment-Modus](#deployment-modi) wählen und starten, oder das [Setup-Script](#setup-script) verwenden.
+
+---
+
+## Setup-Script
+
+`setup.sh` nimmt alle Optionen als Parameter entgegen, schreibt das `Caddyfile` automatisch und startet den passenden Stack.
+
+```bash
+./setup.sh [OPTIONS]
+```
+
+| Option | Beschreibung |
+|--------|-------------|
+| _(keine)_ | Core: Prometheus + Grafana |
+| `--caddy` | Caddy Reverse Proxy einbinden (HTTP :80) |
+| `--homepage` | Homepage einbinden (benötigt `--caddy`) |
+| `--domain DOMAIN` | HTTPS aktivieren — Caddy holt automatisch ein Let's Encrypt-Zertifikat (setzt `--caddy` und `--homepage` implizit) |
+| `--down` | Stack stoppen |
+| `--dry-run` | Befehl anzeigen, nicht ausführen |
+
+**Beispiele:**
+
+```bash
+# Nur Core
+./setup.sh
+
+# Mit Caddy (HTTP)
+./setup.sh --caddy
+
+# Mit Caddy + Homepage
+./setup.sh --caddy --homepage
+
+# Mit HTTPS (Caddy + Homepage + Let's Encrypt)
+./setup.sh --domain minecraft.example.com
+
+# Stack stoppen
+./setup.sh --down
+```
+
+Das Script gibt nach dem Start die URLs aller Dienste aus.
 
 ---
 
 ## Deployment-Modi
 
 Der Stack ist parametrisiert — Caddy und Homepage sind optional zuschaltbar.
+> **Tipp:** Statt der folgenden `docker compose`-Befehle kann auch das [Setup-Script](#setup-script) verwendet werden.
 
 ### Modus 1 — Core (Prometheus + Grafana + Test-Minecraft)
 
