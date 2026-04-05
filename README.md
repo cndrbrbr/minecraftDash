@@ -134,7 +134,7 @@ Das Script gibt nach dem Start die URLs aller Dienste aus.
 Der Stack ist parametrisiert — Caddy und Homepage sind optional zuschaltbar.
 > **Tipp:** Statt der folgenden `docker compose`-Befehle kann auch das [Setup-Script](#setup-script) verwendet werden.
 
-### Modus 1 — Core (Prometheus + Grafana + Test-Minecraft)
+### Modus 1 — Core (Prometheus + Grafana)
 
 ```bash
 docker compose up -d
@@ -144,7 +144,6 @@ docker compose up -d
 |------------|-----------------------|---------------|
 | Grafana    | http://localhost:3000 | admin / admin |
 | Prometheus | http://localhost:9090 | —             |
-| Minecraft  | localhost:25570       | Offline-Modus |
 
 ### Modus 2 — Core + Caddy (HTTP/HTTPS Reverse Proxy)
 
@@ -171,9 +170,6 @@ docker compose -f docker-compose.yml -f compose.caddy.yml -f compose.homepage.ym
 | Prometheus | http://localhost:9090 |
 
 Die Homepage zeigt eine Live-Übersicht aller Server (online/offline, Spieler, TPS) und enthält die Projektdokumentation.
-
-> **Hinweis:** Der Minecraft-Test-Server startet beim ersten Start langsamer, da Spigot heruntergeladen wird.
-> Status prüfen: `docker logs -f minecraft`
 
 ---
 
@@ -414,10 +410,6 @@ iptables -I DOCKER-USER -p tcp --dport 9090 -j DROP
 # ── Caddy (80/443) — öffentlich ───────────────────────────────
 # Caddy selbst entscheidet, wer was sehen darf.
 # Keine Einschränkung nötig — Port 80/443 muss offen sein.
-
-# ── Test-Minecraft (25570) — nur lokal ───────────────────────
-iptables -I DOCKER-USER -p tcp --dport 25570 -s 127.0.0.1 -j ACCEPT
-iptables -I DOCKER-USER -p tcp --dport 25570 -j DROP
 ```
 
 **Regeln dauerhaft speichern** (Debian/Ubuntu):
@@ -437,17 +429,16 @@ iptables -L DOCKER-USER -n --line-numbers
 
 ```
 minecraftDash/
-├── docker-compose.yml                        # Core-Stack (Prometheus, Grafana, Minecraft)
+├── docker-compose.yml                        # Core-Stack (Prometheus + Grafana)
 ├── compose.caddy.yml                         # Opt-in: Caddy Reverse Proxy
 ├── compose.homepage.yml                      # Opt-in: Homepage (benötigt compose.caddy.yml)
 ├── Caddyfile                                 # Caddy-Konfiguration (HTTP + HTTPS-Vorlage)
+├── setup.sh                                  # Setup-Script (Parameter: --caddy, --homepage, --domain)
 ├── prometheus.yml                            # Scrape-Konfiguration (Server hier eintragen)
 ├── homepage/                                 # Statische Website
 │   ├── index.html                            # Server-Übersicht (live via Prometheus)
 │   ├── *.html                                # Projektdokumentation (34 Seiten)
 │   └── images/                              # Bilder
-├── plugins/
-│   └── minecraft-prometheus-exporter.jar    # Spigot-Plugin
 ├── grafana/
 │   ├── grafana.ini                           # Grafana-Konfiguration
 │   ├── dashboards/
@@ -479,19 +470,12 @@ docker compose -f docker-compose.yml -f compose.caddy.yml -f compose.homepage.ym
 docker compose down
 
 # Logs anzeigen
-docker logs -f minecraft
 docker logs -f prometheus
 docker logs -f grafana
 docker logs -f caddy
 
-# Minecraft-Konsole (RCON)
-docker exec -it minecraft rcon-cli --host localhost --port 25575 --password testpass123
-
 # Prometheus neu laden (nach Änderung an prometheus.yml)
 docker compose restart prometheus
-
-# Metriken direkt prüfen
-curl http://localhost:9940/metrics
 
 # Caddy neu laden (nach Änderung am Caddyfile)
 docker exec caddy caddy reload --config /etc/caddy/Caddyfile
