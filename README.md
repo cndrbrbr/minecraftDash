@@ -4,4 +4,4 @@
 
 1. Prometheus,  sammelt Daten
 2. Grafana, zeigt Dashboards
-3. Exporter, liefert Minecraft-Daten
+3. Exporter, liefert Minecraft-Daten (mc-exporter, mcstatus)
