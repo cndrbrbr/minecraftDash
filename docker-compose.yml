@@ -1,6 +1,12 @@
 #######################################################
 # Dashboard for Minecraft Servers
 # (c) 2026 cndrbrbr
+#
+# Optionale Komponenten zuschalten:
+#   Mit Caddy (HTTP/HTTPS):
+#     docker compose -f docker-compose.yml -f compose.caddy.yml up -d
+#   Mit Caddy + Homepage:
+#     docker compose -f docker-compose.yml -f compose.caddy.yml -f compose.homepage.yml up -d
 #######################################################
 
 services:
@@ -47,23 +53,6 @@ services:
       - ./grafana/dashboards:/var/lib/grafana/dashboards
       - grafana-data:/var/lib/grafana
 
-  caddy:
-    image: caddy:2-alpine
-    container_name: caddy
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./homepage:/srv:ro
-      - caddy-data:/data
-      - caddy-config:/config
-    depends_on:
-      - prometheus
-
 volumes:
   mc-data:
   grafana-data:
-  caddy-data:
-  caddy-config:

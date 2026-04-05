@@ -1,0 +1,25 @@
+# compose.caddy.yml — Caddy reverse proxy (HTTP/HTTPS)
+#
+# Verwendung:
+#   docker compose -f docker-compose.yml -f compose.caddy.yml up -d
+#
+# Für HTTPS: Domain in Caddyfile eintragen (auskommentierten Block aktivieren).
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - prometheus
+
+volumes:
+  caddy-data:
+  caddy-config:

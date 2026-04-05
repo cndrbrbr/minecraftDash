@@ -1,0 +1,9 @@
+# compose.homepage.yml — Server-Übersichts-Homepage
+#
+# Verwendung (immer zusammen mit compose.caddy.yml):
+#   docker compose -f docker-compose.yml -f compose.caddy.yml -f compose.homepage.yml up -d
+
+services:
+  caddy:
+    volumes:
+      - ./homepage:/srv:ro
