@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Filme — Minecraft im Unterricht</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f0f13; --card-bg: #1a1a24; --border: #2a2a3a;
+  --text: #e2e8f0; --muted: #94a3b8; --accent: #6366f1;
+  --green: #4ade80; --nav-bg: #13131c; --nav-width: 260px;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif;
+  display: flex; min-height: 100vh; font-size: 15px; line-height: 1.7; }
+
+/* ── Sidebar nav ── */
+.main-nav { width: var(--nav-width); min-width: var(--nav-width); background: var(--nav-bg);
+  border-right: 1px solid var(--border); padding: 1.5rem 0; overflow-y: auto;
+  position: sticky; top: 0; height: 100vh; }
+.main-nav ul { list-style: none; }
+.main-nav > ul > li > a { display: block; padding: .5rem 1.5rem; color: var(--muted);
+  text-decoration: none; font-size: .85rem; font-weight: 500;
+  border-left: 3px solid transparent; transition: all .15s; }
+.main-nav > ul > li > a:hover,
+.main-nav > ul > li > a.active { color: var(--text); border-left-color: var(--accent); background: rgba(99,102,241,.08); }
+.main-nav ul ul { padding-left: 1rem; }
+.main-nav ul ul a { display: block; padding: .3rem 1.5rem; color: var(--muted);
+  text-decoration: none; font-size: .8rem; border-left: 2px solid transparent; }
+.main-nav ul ul a:hover, .main-nav ul ul a.active { color: var(--text); border-left-color: var(--accent); }
+.main-nav ul ul ul { padding-left: 1rem; }
+.main-nav ul ul ul a { font-size: .75rem; padding: .25rem 1rem; }
+
+/* ── Content ── */
+.content { flex: 1; padding: 2.5rem 3rem; max-width: 860px; }
+.content h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 1.5rem;
+  padding-bottom: .75rem; border-bottom: 1px solid var(--border); }
+.content h2 { font-size: 1.3rem; font-weight: 600; margin: 1.8rem 0 .75rem; color: #c7d2fe; }
+.content h3 { font-size: 1.1rem; font-weight: 600; margin: 1.4rem 0 .5rem; color: #a5b4fc; }
+.content p { margin-bottom: 1rem; }
+.content ul, .content ol { margin: .5rem 0 1rem 1.5rem; }
+.content li { margin-bottom: .3rem; }
+.content a { color: var(--accent); text-decoration: none; }
+.content a:hover { text-decoration: underline; }
+.content pre, .content code { background: #0d1117; border: 1px solid var(--border);
+  border-radius: .4rem; font-family: 'Consolas', monospace; font-size: .85rem; }
+.content pre { padding: 1rem; overflow-x: auto; margin: 1rem 0; }
+.content code { padding: .15rem .4rem; }
+.content pre code { padding: 0; border: none; background: none; }
+.content table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.content th, .content td { padding: .6rem 1rem; border: 1px solid var(--border); text-align: left; }
+.content th { background: var(--card-bg); }
+.content img { max-width: 100%; border-radius: .5rem; margin: .5rem 0; }
+.content figure { margin: 1rem 0; }
+.content figcaption { font-size: .8rem; color: var(--muted); margin-top: .3rem; }
+.content blockquote { border-left: 3px solid var(--accent); padding-left: 1rem;
+  color: var(--muted); margin: 1rem 0; }
+.content hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+/* ── Post cards (news) ── */
+.post-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: .75rem;
+  padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+.post-card h2 { margin: 0 0 .5rem; font-size: 1.1rem; }
+.post-card .date { font-size: .75rem; color: var(--muted); margin-bottom: .75rem; }
+.post-card p { margin: 0; font-size: .9rem; color: var(--muted); }
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  body { flex-direction: column; }
+  .main-nav { width: 100%; height: auto; position: static; }
+  .content { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+<nav class="main-nav">
+<ul>
+<li><a href="index.html">&#9670; Dashboard</a></li>
+<li><a href="news.html">Neuigkeiten</a></li>
+<li><a href="das-projekt.html">Das Projekt: Minecraft Unterricht in der Schule</a>
+<ul>
+<li><a href="arbeiten-im-projekt.html">Arbeiten im Projekt</a></li>
+<li><a href="das-team.html">Das Team</a></li>
+<li><a href="minecraft.html">Minecraft</a></li>
+<li><a href="sample-page-2.html">Projekt-Inhalte</a></li>
+<li><a href="beispiele-fur-inhalte-unterrichtsfacher.html">Themen für den Geschichts-Unterricht</a></li>
+<li><a href="beispiele-fur-mathematik.html">Themen für den Mathematik-Unterricht</a></li>
+<li><a href="warum-in-der-schule.html">Warum in der Schule?</a></li>
+</ul></li>
+<li><a href="album.html" class="active">Filme</a></li>
+<li><a href="infos-zu-minecraft.html">Infos zu Minecraft</a>
+<ul>
+<li><a href="minecraft-build-con.html">MineCraft Build-Con</a></li>
+<li><a href="mobel-bauen.html">Möbel bauen</a></li>
+<li><a href="tips-fur-admins.html">Tips für Admins</a>
+<ul>
+<li><a href="eigenen-server-aufbauen.html">Eigenen Server aufbauen</a></li>
+<li><a href="mapcrafter-einrichten.html">Mapcrafter einrichten</a></li>
+</ul></li>
+</ul></li>
+<li><a href="java.html">Java</a>
+<ul>
+<li><a href="das-erste-plugin.html">Das erste Plugin</a></li>
+<li><a href="die-programme.html">Die Programme</a></li>
+<li><a href="entwicklung-einrichten.html">Entwicklung einrichten</a></li>
+<li><a href="geomaptools-minecraft-plugin.html">geomaptools minecraft plugin</a></li>
+<li><a href="lokaler-server-zum-uben.html">Lokaler Server zum Üben</a></li>
+</ul></li>
+<li><a href="javascript.html">Javascript</a>
+<ul>
+<li><a href="blumenbeet-und-blumenkuebel.html">Blumenbeet und Blumenkuebel</a></li>
+<li><a href="ein-script-ausfuhren.html">Ein Script ausführen</a></li>
+<li><a href="filmtutor.html">FilmTutor</a></li>
+<li><a href="hochhaus-bauen.html">Hochhaus bauen</a></li>
+<li><a href="mit-farben-bauen.html">Mit Farben bauen</a></li>
+<li><a href="wtc-javascript-source.html">WTC Javascript Source</a></li>
+<li><a href="wtc-twin-towers-bauen.html">WTC Twin Towers bauen</a></li>
+</ul></li>
+<li><a href="massstab-und-blocke.html">Messen und Bauen</a>
+<ul>
+<li><a href="massstab.html">Unser Massstab</a></li>
+</ul></li>
+<li><a href="datenschutzerklarung.html">Datenschutz</a></li>
+</ul>
+</nav>
+
+<main class="content">
+<h1>Filme</h1>
+<div id="content">
+<div class="post">
+
+<table>
+<tbody>
+<tr>
+<td><iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/kMdqifKyTR8?rel=0" frameborder="0" allowfullscreen></iframe></td>
+</tr>
+<tr>
+<td>Infos von der Baustelle</td>
+</tr>
+<tr>
+<td><iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/90_ywWvo9rQ?rel=0" frameborder="0" allowfullscreen></iframe></td>
+</tr>
+<tr>
+<td>Im Schwimmbad</td>
+</tr>
+<tr>
+<td><iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/iU-udyN2Lj8?rel=0" frameborder="0" allowfullscreen></iframe></td>
+</tr>
+<tr>
+<td>Maschine von Lars</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</main>
+</body>
+</html>
