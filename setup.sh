@@ -140,14 +140,13 @@ if $OPT_CADDY && ! $OPT_DOWN; then
   write_caddyfile
 fi
 
-# Docker hat einen bekannten Timing-Bug: das Default-Netzwerk wird angelegt,
-# aber der letzte Container findet es kurz nicht. Einmal wiederholen reicht.
-if ! "${CMD[@]}"; then
-  echo ""
-  echo "Erster Versuch fehlgeschlagen (Docker-Netzwerk-Bug), starte neu..."
-  sleep 1
-  "${CMD[@]}"
+# Stale Container mit alten Netzwerk-Referenzen entfernen, damit Docker
+# sie frisch anlegt — verhindert den "network not found"-Bug beim Start.
+if ! $OPT_DOWN; then
+  docker rm -f caddy prometheus grafana 2>/dev/null || true
 fi
+
+"${CMD[@]}"
 
 # ── Erreichbarkeit ausgeben ────────────────────────────────────────────────────
 if ! $OPT_DOWN; then
