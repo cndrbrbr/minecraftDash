@@ -4,17 +4,21 @@ global:
 scrape_configs:
   - job_name: "minecraft"
     static_configs:
+      - targets: ["89.58.11.96:9940"]
+        labels:
+          server_name: "codefield-javascript"
+
       - targets: ["185.170.113.136:9940"]
         labels:
-          server_name: "mm-lobby"
+          server_name: "meckminecraft-lobby"
 
       - targets: ["185.170.113.136:9941"]
         labels:
-          server_name: "mm-mc1"
+          server_name: "meckminecraft-campus"
 
       - targets: ["185.170.113.136:9942"]
         labels:
-          server_name: "mm-mc2"
+          server_name: "meckminecraft-bedwars"
 
       - targets: ["185.170.113.136:9943"]
         labels:
@@ -30,20 +34,20 @@ scrape_configs:
 
       - targets: ["2.56.99.112:9941"]
         labels:
-          server_name: "nc3-mc1"
+          server_name: "nc3-lifesteal"
 
       - targets: ["2.56.99.112:9942"]
         labels:
-          server_name: "nc3-mc2"
+          server_name: "nc3-Olymp SMP"
 
       - targets: ["2.56.99.112:9943"]
         labels:
-          server_name: "nc3-mc3"
+          server_name: "nc3-OnyxCraft"
 
       - targets: ["2.56.99.112:9944"]
         labels:
-          server_name: "nc3-mc4"
+          server_name: "nc3-Softsurvival"
 
       - targets: ["2.56.99.112:9945"]
         labels:
-          server_name: "nc3-mc5"
+          server_name: "nc3-EhleTomo"
