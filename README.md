@@ -80,13 +80,17 @@ cd minecraftDash
 scrape_configs:
   - job_name: "minecraft"
     static_configs:
+      - targets: ["185.170.113.136:9940"]
+        labels:
+          server_name: "meckminecraft-lobby"
+
       - targets: ["185.170.113.136:9941"]
         labels:
-          server_name: "mc1"
+          server_name: "meckminecraft-campus"
 
-      - targets: ["185.170.113.136:9942"]
+      - targets: ["2.56.99.112:9941"]
         labels:
-          server_name: "mc2"
+          server_name: "nc3-lifesteal"
 ```
 
 ### 3. Discord-Webhook eintragen (optional)
