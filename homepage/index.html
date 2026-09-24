@@ -155,6 +155,17 @@
       margin-top: -.2rem;
     }
 
+    .server-connect {
+      font-size: .75rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: var(--text);
+      background: var(--bg-alt, rgba(255,255,255,.06));
+      padding: .15rem .4rem;
+      border-radius: 4px;
+      width: fit-content;
+      user-select: all;
+    }
+
     .server-version {
       font-size: .7rem;
       color: var(--muted);
@@ -376,6 +387,8 @@
         const name = r.metric.server_name || r.metric.instance;
         servers[name] = {
           up: parseFloat(r.value[1]) === 1,
+          ip: r.metric.connect_ip || null,
+          port: r.metric.connect_port || null,
           players: 0, tps: null, version: null,
           ramAlloc: null, ramFree: null, ramMax: null,
           chunks: null, entities: null,
@@ -444,6 +457,7 @@
           <div class="server-card ${s.up ? 'up' : 'down'}">
             <div class="server-name">${displayName(name)}</div>
             <div class="server-id">${name}${s.version ? ` · ${s.version}` : ''}</div>
+            ${s.ip ? `<div class="server-connect">${s.ip}${s.port ? ':' + s.port : ''}</div>` : ''}
             <div class="badge ${s.up ? 'badge-up' : 'badge-down'}">${s.up ? 'ONLINE' : 'OFFLINE'}</div>
             <hr class="divider">
             ${metric('Spieler',  down ? '—' : s.players)}

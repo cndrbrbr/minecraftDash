@@ -7,47 +7,71 @@ scrape_configs:
       - targets: ["89.58.11.96:9940"]
         labels:
           server_name: "codefield-javascript"
+          connect_ip: "89.58.11.96"
+          connect_port: ""
 
       - targets: ["185.170.113.136:9940"]
         labels:
           server_name: "meckminecraft-lobby"
+          connect_ip: "185.170.113.136"
+          connect_port: "25565"
 
       - targets: ["185.170.113.136:9941"]
         labels:
           server_name: "meckminecraft-campus"
+          connect_ip: "185.170.113.136"
+          connect_port: "25565"
 
       - targets: ["185.170.113.136:9942"]
         labels:
           server_name: "meckminecraft-bedwars"
+          connect_ip: "185.170.113.136"
+          connect_port: "25565"
 
       - targets: ["185.170.113.136:9943"]
         labels:
           server_name: "mm-mc3"
+          connect_ip: "185.170.113.136"
+          connect_port: "25565"
 
       - targets: ["185.170.113.136:9944"]
         labels:
           server_name: "mm-mc4"
+          connect_ip: "185.170.113.136"
+          connect_port: "25565"
 
       - targets: ["185.170.113.136:9945"]
         labels:
           server_name: "mm-mc5"
+          connect_ip: "185.170.113.136"
+          connect_port: "25565"
 
       - targets: ["2.56.99.112:9941"]
         labels:
           server_name: "nc3-lifesteal"
+          connect_ip: "2.56.99.112"
+          connect_port: "25565"
 
       - targets: ["2.56.99.112:9942"]
         labels:
           server_name: "nc3-Olymp SMP"
+          connect_ip: "2.56.99.112"
+          connect_port: "25566"
 
       - targets: ["2.56.99.112:9943"]
         labels:
           server_name: "nc3-OnyxCraft"
+          connect_ip: "2.56.99.112"
+          connect_port: "25567"
 
       - targets: ["2.56.99.112:9944"]
         labels:
           server_name: "nc3-Softsurvival"
+          connect_ip: "2.56.99.112"
+          connect_port: "25568"
 
       - targets: ["2.56.99.112:9945"]
         labels:
           server_name: "nc3-EhleTomo"
+          connect_ip: "2.56.99.112"
+          connect_port: "25569"
