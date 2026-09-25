@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Javascript — Minecraft im Unterricht</title>
+<title>Anleitung Javaversion — Minecraft im Unterricht</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -64,6 +64,14 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
 .post-card .date { font-size: .75rem; color: var(--muted); margin-bottom: .75rem; }
 .post-card p { margin: 0; font-size: .9rem; color: var(--muted); }
 
+/* ── PDF viewer ── */
+.content.wide { max-width: none; }
+.pdf-actions { margin-bottom: 1rem; display: flex; gap: .75rem; flex-wrap: wrap; }
+.pdf-actions a { background: var(--card-bg); border: 1px solid var(--border); border-radius: .5rem;
+  padding: .4rem .9rem; font-size: .85rem; }
+.pdf-frame { width: 100%; height: calc(100vh - 12rem); min-height: 500px;
+  border: 1px solid var(--border); border-radius: .5rem; background: #fff; }
+
 /* ── Mobile ── */
 @media (max-width: 768px) {
   body { flex-direction: column; }
@@ -76,7 +84,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
 <nav class="main-nav">
 <ul>
 <li><a href="index.html">&#9670; Dashboard</a></li>
-<li><a href="anleitung-java.html">Anleitung Javaversion</a></li>
+<li><a href="anleitung-java.html" class="active">Anleitung Javaversion</a></li>
 <li><a href="news.html">Neuigkeiten</a></li>
 <li><a href="das-projekt.html">Das Projekt: Minecraft Unterricht in der Schule</a>
 <ul>
@@ -107,7 +115,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
 <li><a href="geomaptools-minecraft-plugin.html">geomaptools minecraft plugin</a></li>
 <li><a href="lokaler-server-zum-uben.html">Lokaler Server zum Üben</a></li>
 </ul></li>
-<li><a href="javascript.html" class="active">Javascript</a>
+<li><a href="javascript.html">Javascript</a>
 <ul>
 <li><a href="blumenbeet-und-blumenkuebel.html">Blumenbeet und Blumenkuebel</a></li>
 <li><a href="ein-script-ausfuhren.html">Ein Script ausführen</a></li>
@@ -125,14 +133,15 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
 </ul>
 </nav>
 
-<main class="content">
-<h1>Javascript</h1>
-<p>Wenn Ihr einen <a href="http://minecraft-schule.de/index.php/java/lokaler-server-zum-uben/">Server zum Üben</a> aufsetzen möchtet, findet Ihr <a href="http://minecraft-schule.de/index.php/java/lokaler-server-zum-uben/">hier</a> eine Anleitung für die Einrichtung Eures eigenen Mincraft-Servers mit Scriptcraft.</p>
-<p>Auf unserem Server ist das Modul <a href="http://scriptcraftjs.org/">Scriptcraft</a> installiert. Ihr habt alle das Recht, Scripte zu laden und auszuführen.
-Die <a href="https://github.com/walterhiggins/ScriptCraft/blob/master/docs/API-Reference.md">Scriptcraft Referenz</a> gibt Detailinfos zu allen Kommandos.</p>
-<p>Scripte könnt Ihr hier hochladen : <a href="http://minecraft-schule.de/up/">http://minecraft-schule.de/up/</a></p>
-<p><img class="alignnone size-large wp-image-362" src="images/scriptcraftbox-1024x404.png" alt="" width="600" height="237" /></p>
-<p><img class="alignnone size-full wp-image-226" src="images/scriptcraftdrone.png" alt="" width="967" height="558" /></p>
+<main class="content wide">
+<h1>Anleitung Minecraft Java Edition</h1>
+<div class="pdf-actions">
+<a href="AnleitungMinecraftJavaEdition.pdf" target="_blank" rel="noopener">In neuem Tab öffnen</a>
+<a href="AnleitungMinecraftJavaEdition.pdf" download>PDF herunterladen</a>
+</div>
+<object class="pdf-frame" data="AnleitungMinecraftJavaEdition.pdf" type="application/pdf">
+<p>Dein Browser kann das PDF hier nicht anzeigen. <a href="AnleitungMinecraftJavaEdition.pdf">PDF öffnen</a></p>
+</object>
 </main>
 </body>
 </html>
