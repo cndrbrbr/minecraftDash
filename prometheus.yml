@@ -13,36 +13,42 @@ scrape_configs:
       - targets: ["185.170.113.136:9940"]
         labels:
           server_name: "meckminecraft-lobby"
+          local_name: "lobby"
           connect_ip: "185.170.113.136"
           connect_port: "25565"
 
       - targets: ["185.170.113.136:9941"]
         labels:
           server_name: "meckminecraft-campus"
+          local_name: "mc1"
           connect_ip: "185.170.113.136"
           connect_port: "25565"
 
       - targets: ["185.170.113.136:9942"]
         labels:
           server_name: "meckminecraft-bedwars"
+          local_name: "mc2"
           connect_ip: "185.170.113.136"
           connect_port: "25565"
 
       - targets: ["185.170.113.136:9943"]
         labels:
           server_name: "mm-mc3"
+          local_name: "mc3"
           connect_ip: "185.170.113.136"
           connect_port: "25565"
 
       - targets: ["185.170.113.136:9944"]
         labels:
           server_name: "mm-mc4"
+          local_name: "mc4"
           connect_ip: "185.170.113.136"
           connect_port: "25565"
 
       - targets: ["185.170.113.136:9945"]
         labels:
           server_name: "mm-mc5"
+          local_name: "mc5"
           connect_ip: "185.170.113.136"
           connect_port: "25565"
 
