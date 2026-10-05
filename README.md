@@ -192,17 +192,26 @@ Die Homepage zeigt eine Live-Übersicht aller Server und enthält die Projektdok
 
 ### Homepage — Server-Karten
 
-Jede Server-Karte zeigt alle verfügbaren Prometheus-Metriken:
+Jede Server-Karte zeigt die verfügbaren Prometheus-Metriken. Zeilen ohne Daten werden ausgeblendet
+(z. B. Tick-Zeiten, die das Plugin auf Spigot nur als `-1` liefert).
 
-| Bereich | Metriken |
-|---------|---------|
-| Header | Anzeigename (MOTD / servers.json / server_name), Version, Online-Badge |
-| Spieler & Performance | Spieler online, TPS (farbig: grün ≥18, gelb ≥15, rot <15), RAM benutzt / max |
-| Welt | Geladene Chunks, Entities, Whitelist-Einträge |
-| Tick-Timing | Median, Durchschnitt, Min, Max (in ms) |
-| JVM | Threads, GC-Events, Weltgröße |
+| Bereich | Inhalt |
+|---------|--------|
+| Header | Anzeigename (MOTD / servers.json / server_name), lokaler Servername (`local_name`, z. B. `mc1`), Version, Adresse, Online-Badge mit „seit …“ |
+| Aktivität | Spieler online, bekannte Spieler, Rekord 7 Tage, zuletzt gespielt, Verfügbarkeit 7 Tage, Balken „Spieler pro Tag“ (7 Tage) |
+| Performance | TPS (farbig: grün ≥18, gelb ≥15, rot <15), RAM benutzt / max, Tick-Zeiten (falls vorhanden) |
+| Welt | Welten, Weltgröße, geladene Chunks, Entities, Whitelist-Einträge |
+| JVM | Threads, GC-Events |
 
-Die globale Zusammenfassung oben zeigt: Server online/offline, Spieler gesamt, Ø TPS, Entities gesamt.
+Offline-Karten zeigen die Aktivität und die zuletzt bekannte Weltgröße.
+Die Verlaufswerte werden alle 5 Minuten neu abgefragt, die Live-Werte alle 15 Sekunden.
+
+Die globale Zusammenfassung oben zeigt: Server online/offline, Spieler online, Ø TPS, Entities gesamt,
+bekannte Spieler (serverübergreifend, ohne Namen) und den Spieler-Rekord der letzten 24 Stunden.
+
+Den lokalen Servernamen trägt man in `prometheus.yml` als Label `local_name` ein
+(auf einem minecraftHostingServer: Port 9940 = `lobby`, 9941–9945 = `mc1`–`mc5`).
+Danach Prometheus neu starten: `./restart-prometheus.sh`.
 
 ### Homepage — Anzeigenamen konfigurieren
 

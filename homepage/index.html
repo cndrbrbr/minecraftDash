@@ -111,6 +111,8 @@
     .stat-card.players .value { color: var(--accent); }
     .stat-card.tps     .value { color: var(--yellow); }
     .stat-card.entities .value { color: var(--muted); }
+    .stat-card.known    .value { color: var(--text); }
+    .stat-card.record   .value { color: var(--green); }
 
     /* ── Server grid ── */
     .section-title {
@@ -148,6 +150,66 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+
+    .server-title {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      min-width: 0;
+    }
+
+    .local-name {
+      flex: none;
+      font-size: .7rem;
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      padding: 0 .35rem;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .since {
+      font-size: .72rem;
+      color: var(--muted);
+    }
+
+    .spark-title {
+      font-size: .7rem;
+      color: var(--muted);
+      margin-top: .2rem;
+    }
+
+    .spark {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 36px;
+    }
+
+    .spark .bar {
+      flex: 1;
+      min-height: 2px;
+      background: var(--accent);
+      border-radius: 2px 2px 0 0;
+    }
+
+    .spark .bar.zero { background: var(--border); }
+
+    .spark-labels {
+      display: flex;
+      gap: 3px;
+      font-size: .6rem;
+      color: var(--muted);
+    }
+
+    .spark-labels span { flex: 1; text-align: center; }
 
     .server-id {
       font-size: .7rem;
@@ -288,7 +350,7 @@
       <div class="value" id="total-offline">—</div>
     </div>
     <div class="stat-card players">
-      <div class="label">Spieler</div>
+      <div class="label">Spieler online</div>
       <div class="value" id="total-players">—</div>
     </div>
     <div class="stat-card tps">
@@ -298,6 +360,14 @@
     <div class="stat-card entities">
       <div class="label">Entities</div>
       <div class="value" id="total-entities">—</div>
+    </div>
+    <div class="stat-card known">
+      <div class="label">Bekannte Spieler</div>
+      <div class="value" id="total-known">—</div>
+    </div>
+    <div class="stat-card record">
+      <div class="label">Rekord 24 h</div>
+      <div class="value" id="total-record">—</div>
     </div>
   </div>
 
@@ -309,6 +379,7 @@
 
 <script>
   const PROMETHEUS = '/api/prometheus/api/v1/query';
+  const PROMETHEUS_RANGE = '/api/prometheus/api/v1/query_range';
   const REFRESH_INTERVAL = 15;
   let countdown = REFRESH_INTERVAL;
   let serverNames = {};
@@ -350,16 +421,107 @@
     return `<div class="metric"><span class="label">${label}</span><span class="value"${style}>${value}</span></div>`;
   }
 
+  // Row only when the exporter delivers the value (e.g. tick times are -1 on Spigot).
+  function metricIf(label, value, format = v => v, color) {
+    return (value === null || value === undefined) ? '' : metric(label, format(value), color);
+  }
+
+  function fmtAge(seconds) {
+    if (seconds < 120)   return 'gerade eben';
+    if (seconds < 3600)  return Math.round(seconds / 60) + ' Min.';
+    if (seconds < 86400) return Math.round(seconds / 3600) + ' Std.';
+    const days = Math.round(seconds / 86400);
+    return days === 1 ? '1 Tag' : days + ' Tagen';
+  }
+
+  async function queryRange(expr, start, end, step) {
+    const params = new URLSearchParams({ query: expr, start, end, step });
+    const res = await fetch(`${PROMETHEUS_RANGE}?${params}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return (await res.json()).data.result;
+  }
+
+  // ── History (7 days); refreshed every 5 minutes, failures keep the old values ──
+  const HISTORY_INTERVAL = 300000;
+  const WEEKDAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+  let history = { servers: {}, days: [], known: null, record: null };
+  let historyLoaded = 0;
+
+  async function loadHistory() {
+    const tomorrow = new Date();
+    tomorrow.setHours(24, 0, 0, 0);
+    const end = Math.floor(tomorrow.getTime() / 1000);
+    const start = end - 6 * 86400;
+    const [record7d, lastPlayed, avail7d, lastDown, lastUp, known, record24h, daily,
+           lastKnown, lastWorldSize] = await Promise.all([
+      query('max by (server_name) (max_over_time(mc_players_online_total[7d]))'),
+      query('time() - max by (server_name) (max_over_time((timestamp(mc_players_online_total > 0))[30d:5m]))'),
+      query('avg by (server_name) (avg_over_time(up{job="minecraft"}[7d]))'),
+      query('time() - max by (server_name) (max_over_time((timestamp(up{job="minecraft"} == 0))[7d:1m]))'),
+      query('time() - max by (server_name) (max_over_time((timestamp(up{job="minecraft"} == 1))[30d:5m]))'),
+      query('count(count by (uid) (mc_player_online))'),
+      query('max_over_time((sum(mc_players_online_total))[24h:5m])'),
+      // Point at midnight T = maximum of the calendar day before T.
+      queryRange('max by (server_name) (max_over_time(mc_players_online_total[1d]))', start, end, 86400),
+      // Last known values, shown on offline cards.
+      query('max by (server_name) (last_over_time(mc_players_total[30d]))'),
+      query('sum by (server_name) (last_over_time(mc_world_size[30d]))'),
+    ]);
+    const servers = {};
+    const get = name => servers[name] ??= {};
+    const set = (data, field) => {
+      for (const r of data) get(r.metric.server_name)[field] = parseFloat(r.value[1]);
+    };
+    set(record7d, 'record');
+    set(lastPlayed, 'lastPlayed');
+    set(avail7d, 'avail');
+    set(lastDown, 'lastDown');
+    set(lastUp, 'lastUp');
+    set(lastKnown, 'known');
+    set(lastWorldSize, 'worldSize');
+    const days = [];
+    for (let t = start; t <= end; t += 86400) days.push(t);
+    for (const r of daily) {
+      const values = Object.fromEntries(r.values.map(([t, v]) => [Math.round(t), parseInt(v, 10)]));
+      get(r.metric.server_name).daily = days.map(t => values[t] ?? null);
+    }
+    history = {
+      servers, days,
+      known:  known.length ? parseInt(known[0].value[1], 10) : null,
+      record: record24h.length ? parseInt(record24h[0].value[1], 10) : null,
+    };
+    historyLoaded = Date.now();
+  }
+
+  function sparkline(daily) {
+    if (!history.days.length) return '';
+    daily = daily || history.days.map(() => null);
+    const max = Math.max(1, ...daily.map(v => v ?? 0));
+    const bars = daily.map((v, i) => {
+      const day = new Date((history.days[i] - 86400) * 1000);
+      const label = `${WEEKDAYS[day.getDay()]} ${day.toLocaleDateString('de-DE')}: ${v ?? 'offline'}`;
+      const height = v ? Math.max(8, Math.round(v / max * 100)) : 0;
+      return `<div class="bar${v ? '' : ' zero'}" style="height:${height}%" title="${label}"></div>`;
+    }).join('');
+    const labels = history.days
+      .map(t => `<span>${WEEKDAYS[new Date((t - 86400) * 1000).getDay()]}</span>`).join('');
+    return `<div class="spark-title">Spieler pro Tag (Maximum)</div>
+            <div class="spark">${bars}</div><div class="spark-labels">${labels}</div>`;
+  }
+
   async function refresh() {
     const errorBox = document.getElementById('error-box');
     try {
+      if (Date.now() - historyLoaded > HISTORY_INTERVAL) {
+        try { await loadHistory(); } catch (e) { /* history is optional */ }
+      }
       const [
         upData, playerData, tpsData, infoData,
         ramAllocData, ramFreeData, ramMaxData,
         chunkData, entityData,
         tickMedData, tickAvgData, tickMinData, tickMaxData,
         threadData, gcCountData, worldSizeData,
-        whitelistData
+        whitelistData, knownData, worldCountData
       ] = await Promise.all([
         query('up{job="minecraft"}'),
         query('sum by (server_name) (mc_players_online_total)'),
@@ -370,14 +532,16 @@
         query('mc_jvm_memory{type="max"}'),
         query('sum by (server_name) (mc_loaded_chunks_total)'),
         query('sum by (server_name) (mc_entities_total)'),
-        query('mc_tick_duration_median'),
-        query('mc_tick_duration_average'),
-        query('mc_tick_duration_min'),
-        query('mc_tick_duration_max'),
+        query('mc_tick_duration_median >= 0'),
+        query('mc_tick_duration_average >= 0'),
+        query('mc_tick_duration_min >= 0'),
+        query('mc_tick_duration_max >= 0'),
         query('mc_jvm_threads_current'),
         query('sum by (server_name) (mc_jvm_gc_collection_seconds_count)'),
         query('sum by (server_name) (mc_world_size)'),
         query('mc_whitelisted_players'),
+        query('max by (server_name) (mc_players_total)'),
+        query('count by (server_name) (mc_world_size)'),
       ]);
 
       errorBox.innerHTML = '';
@@ -390,12 +554,13 @@
           up: parseFloat(r.value[1]) === 1,
           ip: r.metric.connect_ip || null,
           port: r.metric.connect_port || null,
+          localName: r.metric.local_name || null,
           players: 0, tps: null, version: null,
           ramAlloc: null, ramFree: null, ramMax: null,
           chunks: null, entities: null,
           tickMed: null, tickAvg: null, tickMin: null, tickMax: null,
           threads: null, gcCount: null, worldSize: null,
-          whitelist: null,
+          whitelist: null, known: null, worlds: null,
         };
       }
 
@@ -421,6 +586,8 @@
       set(gcCountData, 'gcCount',   v => parseInt(v, 10));
       set(worldSizeData,'worldSize',v => parseFloat(v));
       set(whitelistData,'whitelist',v => parseInt(v, 10));
+      set(knownData,   'known',     v => parseInt(v, 10));
+      set(worldCountData,'worlds',  v => parseInt(v, 10));
 
       motdNames = {};
       for (const r of infoData) {
@@ -441,6 +608,8 @@
       const tpsVals = onlineVals.map(s => s.tps).filter(t => t !== null);
       document.getElementById('total-tps').textContent =
         tpsVals.length ? (tpsVals.reduce((a, t) => a + t, 0) / tpsVals.length).toFixed(1) : '—';
+      document.getElementById('total-known').textContent  = history.known ?? '—';
+      document.getElementById('total-record').textContent = history.record ?? '—';
 
       // Server grid
       const grid = document.getElementById('server-grid');
@@ -452,31 +621,51 @@
       grid.innerHTML = Object.entries(servers)
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([name, s]) => {
+          const h = history.servers[name] || {};
           const ramUsed = (s.ramAlloc !== null && s.ramFree !== null) ? s.ramAlloc - s.ramFree : null;
-          const down = !s.up;
+          let since = '';
+          if (s.up) since = h.lastDown !== undefined ? 'seit ' + fmtAge(h.lastDown) : (h.avail !== undefined ? 'seit über 7 Tagen' : '');
+          else if (h.lastUp !== undefined) since = 'seit ' + fmtAge(h.lastUp);
+          let lastPlayed = null;
+          if (s.up && s.players > 0) lastPlayed = 'jetzt';
+          else if (h.lastPlayed !== undefined) lastPlayed = 'vor ' + fmtAge(h.lastPlayed);
+          const live = s.up ? `
+            <hr class="divider">
+            ${metric('TPS', s.tps !== null ? s.tps.toFixed(1) : '—', tpsColor(s.tps))}
+            ${metric('RAM', fmtBytes(ramUsed) + (s.ramMax ? ' / ' + fmtBytes(s.ramMax) : ''))}
+            ${metricIf('Tick med', s.tickMed, fmtNs)}
+            ${metricIf('Tick avg', s.tickAvg, fmtNs)}
+            ${metricIf('Tick min', s.tickMin, fmtNs)}
+            ${metricIf('Tick max', s.tickMax, fmtNs)}
+            <hr class="divider">
+            ${metricIf('Welten', s.worlds)}
+            ${metricIf('Weltgröße', s.worldSize, fmtBytes)}
+            ${metric('Chunks', s.chunks ?? 0)}
+            ${metric('Entities', s.entities ?? 0)}
+            ${metricIf('Whitelist', s.whitelist)}
+            <hr class="divider">
+            ${metricIf('JVM Threads', s.threads)}
+            ${metricIf('GC Events', s.gcCount)}` : '';
           return `
           <div class="server-card ${s.up ? 'up' : 'down'}">
-            <div class="server-name">${displayName(name)}</div>
+            <div class="server-title">
+              <div class="server-name">${displayName(name)}</div>
+              ${s.localName ? `<span class="local-name" title="Lokaler Servername">${s.localName}</span>` : ''}
+            </div>
             <div class="server-id">${name}${s.version ? ` · ${s.version}` : ''}</div>
             ${s.ip ? `<div class="server-connect">${s.ip}${s.port ? ':' + s.port : ''}</div>` : ''}
-            <div class="badge ${s.up ? 'badge-up' : 'badge-down'}">${s.up ? 'ONLINE' : 'OFFLINE'}</div>
+            <div class="status-row">
+              <div class="badge ${s.up ? 'badge-up' : 'badge-down'}">${s.up ? 'ONLINE' : 'OFFLINE'}</div>
+              ${since ? `<span class="since">${since}</span>` : ''}
+            </div>
             <hr class="divider">
-            ${metric('Spieler',  down ? '—' : s.players)}
-            ${metric('TPS',      down ? '—' : (s.tps !== null ? s.tps.toFixed(1) : '—'), down ? null : tpsColor(s.tps))}
-            ${metric('RAM',      down ? '—' : fmtBytes(ramUsed) + (s.ramMax ? ' / ' + fmtBytes(s.ramMax) : ''))}
-            <hr class="divider">
-            ${metric('Chunks',   down ? '—' : (s.chunks ?? '—'))}
-            ${metric('Entities', down ? '—' : (s.entities ?? '—'))}
-            ${metric('Whitelist',down ? '—' : (s.whitelist ?? '—'))}
-            <hr class="divider">
-            ${metric('Tick med', down ? '—' : fmtNs(s.tickMed))}
-            ${metric('Tick avg', down ? '—' : fmtNs(s.tickAvg))}
-            ${metric('Tick min', down ? '—' : fmtNs(s.tickMin))}
-            ${metric('Tick max', down ? '—' : fmtNs(s.tickMax))}
-            <hr class="divider">
-            ${metric('JVM Threads', down ? '—' : (s.threads ?? '—'))}
-            ${metric('GC Events',   down ? '—' : (s.gcCount ?? '—'))}
-            ${metric('Weltgröße',   down ? '—' : fmtBytes(s.worldSize))}
+            ${s.up ? metric('Spieler online', s.players) : ''}
+            ${metricIf('Bekannte Spieler', s.known ?? h.known)}
+            ${metricIf('Rekord 7 Tage', h.record)}
+            ${metricIf('Zuletzt gespielt', lastPlayed)}
+            ${metricIf('Verfügbarkeit 7 Tage', h.avail, v => (v * 100).toFixed(1) + ' %')}
+            ${sparkline(h.daily)}
+            ${s.up ? live : metricIf('Weltgröße (zuletzt)', h.worldSize, fmtBytes)}
           </div>`;
         }).join('');
 
