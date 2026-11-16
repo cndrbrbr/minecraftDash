@@ -11,20 +11,25 @@
 
 services:
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:v3.11.0
     container_name: prometheus
+    restart: unless-stopped
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"   # nur lokal (restart-prometheus.sh); öffentlich über Caddy /api/prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./secrets:/etc/prometheus/secrets:ro   # nicht im Git (node_exporter-Passwort)
+      - prometheus-data:/prometheus
 
   grafana:
-    image: grafana/grafana
+    image: grafana/grafana:12.4.2
     container_name: grafana
+    restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"   # nur lokal; öffentlich über Caddy https://grafana.meckminecraft.de
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SERVER_ROOT_URL=https://grafana.meckminecraft.de/
     volumes:
       - ./grafana/grafana.ini:/etc/grafana/grafana.ini
       - ./grafana/provisioning:/etc/grafana/provisioning
@@ -33,3 +38,4 @@ services:
 
 volumes:
   grafana-data:
+  prometheus-data:

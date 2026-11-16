@@ -1,0 +1,3 @@
+# Lokale Sicherungskopien und Geheimnisse nie einchecken
+*.bak-*
+secrets/

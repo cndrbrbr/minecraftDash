@@ -55,29 +55,50 @@ scrape_configs:
       - targets: ["2.56.99.112:9941"]
         labels:
           server_name: "nc3-lifesteal"
+          local_name: "mc1"
           connect_ip: "2.56.99.112"
           connect_port: "25565"
 
       - targets: ["2.56.99.112:9942"]
         labels:
-          server_name: "nc3-Olymp SMP"
+          server_name: "nc3-build-contest-game"
+          local_name: "mc2"
           connect_ip: "2.56.99.112"
           connect_port: "25566"
 
       - targets: ["2.56.99.112:9943"]
         labels:
           server_name: "nc3-OnyxCraft"
+          local_name: "mc3"
           connect_ip: "2.56.99.112"
           connect_port: "25567"
 
       - targets: ["2.56.99.112:9944"]
         labels:
           server_name: "nc3-Softsurvival"
+          local_name: "mc4"
           connect_ip: "2.56.99.112"
           connect_port: "25568"
 
       - targets: ["2.56.99.112:9945"]
         labels:
           server_name: "nc3-EhleTomo"
+          local_name: "mc5"
           connect_ip: "2.56.99.112"
           connect_port: "25569"
+
+  # Systemwerte der Server (node_exporter, Basic-Auth). Lokal ergänzt 2026-10-17.
+  - job_name: "node"
+    basic_auth:
+      username: prometheus
+      password_file: /etc/prometheus/secrets/node-exporter-password
+    static_configs:
+      - targets: ["2.56.99.112:9100"]
+        labels:
+          machine: "nc3"
+      - targets: ["185.170.113.136:9100"]
+        labels:
+          machine: "meckminecraft"
+      - targets: ["89.58.11.96:9100"]
+        labels:
+          machine: "codefield"

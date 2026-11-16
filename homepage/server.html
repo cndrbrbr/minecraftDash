@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Server-Status — Minecraft im Unterricht</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --yellow: #facc15; --red: #f87171;
+  --bg: #0f0f13; --card-bg: #1a1a24; --border: #2a2a3a;
+  --text: #e2e8f0; --muted: #94a3b8; --accent: #6366f1;
+  --green: #4ade80; --nav-bg: #13131c; --nav-width: 260px;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif;
+  display: flex; min-height: 100vh; font-size: 15px; line-height: 1.7; }
+
+/* ── Sidebar nav ── */
+.main-nav { width: var(--nav-width); min-width: var(--nav-width); background: var(--nav-bg);
+  border-right: 1px solid var(--border); padding: 1.5rem 0; overflow-y: auto;
+  position: sticky; top: 0; height: 100vh; }
+.main-nav ul { list-style: none; }
+.main-nav > ul > li > a { display: block; padding: .5rem 1.5rem; color: var(--muted);
+  text-decoration: none; font-size: .85rem; font-weight: 500;
+  border-left: 3px solid transparent; transition: all .15s; }
+.main-nav > ul > li > a:hover,
+.main-nav > ul > li > a.active { color: var(--text); border-left-color: var(--accent); background: rgba(99,102,241,.08); }
+.main-nav ul ul { padding-left: 1rem; }
+.main-nav ul ul a { display: block; padding: .3rem 1.5rem; color: var(--muted);
+  text-decoration: none; font-size: .8rem; border-left: 2px solid transparent; }
+.main-nav ul ul a:hover, .main-nav ul ul a.active { color: var(--text); border-left-color: var(--accent); }
+.main-nav ul ul ul { padding-left: 1rem; }
+.main-nav ul ul ul a { font-size: .75rem; padding: .25rem 1rem; }
+
+/* ── Content ── */
+.content { flex: 1; padding: 2.5rem 3rem; max-width: 860px; }
+.content h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 1.5rem;
+  padding-bottom: .75rem; border-bottom: 1px solid var(--border); }
+.content h2 { font-size: 1.3rem; font-weight: 600; margin: 1.8rem 0 .75rem; color: #c7d2fe; }
+.content h3 { font-size: 1.1rem; font-weight: 600; margin: 1.4rem 0 .5rem; color: #a5b4fc; }
+.content p { margin-bottom: 1rem; }
+.content ul, .content ol { margin: .5rem 0 1rem 1.5rem; }
+.content li { margin-bottom: .3rem; }
+.content a { color: var(--accent); text-decoration: none; }
+.content a:hover { text-decoration: underline; }
+.content pre, .content code { background: #0d1117; border: 1px solid var(--border);
+  border-radius: .4rem; font-family: 'Consolas', monospace; font-size: .85rem; }
+.content pre { padding: 1rem; overflow-x: auto; margin: 1rem 0; }
+.content code { padding: .15rem .4rem; }
+.content pre code { padding: 0; border: none; background: none; }
+.content table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.content th, .content td { padding: .6rem 1rem; border: 1px solid var(--border); text-align: left; }
+.content th { background: var(--card-bg); }
+.content img { max-width: 100%; border-radius: .5rem; margin: .5rem 0; }
+.content figure { margin: 1rem 0; }
+.content figcaption { font-size: .8rem; color: var(--muted); margin-top: .3rem; }
+.content blockquote { border-left: 3px solid var(--accent); padding-left: 1rem;
+  color: var(--muted); margin: 1rem 0; }
+.content hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+/* ── Post cards (news) ── */
+.post-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: .75rem;
+  padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+.post-card h2 { margin: 0 0 .5rem; font-size: 1.1rem; }
+.post-card .date { font-size: .75rem; color: var(--muted); margin-bottom: .75rem; }
+.post-card p { margin: 0; font-size: .9rem; color: var(--muted); }
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  body { flex-direction: column; }
+  .main-nav { width: 100%; height: auto; position: static; }
+  .content { padding: 1.5rem; }
+}
+
+
+/* ── Server-Status ── */
+.content.wide { max-width: 1180px; }
+.lead { color: var(--muted); margin-bottom: 1.25rem; }
+.meta { font-size: .8rem; color: var(--muted); margin-bottom: 1.5rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 1rem; }
+.box { background: var(--card-bg); border: 1px solid var(--border); border-radius: .75rem;
+  padding: 1.1rem 1.25rem; border-left: 4px solid var(--border); }
+.box.up { border-left-color: var(--green); }
+.box.down { border-left-color: var(--red); }
+.box-head { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; margin-bottom: .2rem; }
+.box-head h2 { margin: 0; font-size: 1.15rem; color: var(--text); }
+.badge { font-size: .7rem; font-weight: 700; padding: .1rem .5rem; border-radius: 99px; white-space: nowrap; }
+.badge.up { background: rgba(74,222,128,.15); color: var(--green); }
+.badge.down { background: rgba(248,113,113,.15); color: var(--red); }
+.badge.warn { background: rgba(250,204,21,.15); color: var(--yellow); }
+.badge.muted { background: rgba(148,163,184,.12); color: var(--muted); }
+.sub { font-size: .78rem; color: var(--muted); margin-bottom: .8rem; }
+.row { display: flex; justify-content: space-between; gap: .75rem; font-size: .85rem; padding: .18rem 0; }
+.row .label { color: var(--muted); }
+.row .val { font-variant-numeric: tabular-nums; text-align: right; }
+.bar { height: 6px; background: #0d0d14; border-radius: 99px; overflow: hidden; margin: .1rem 0 .45rem; }
+.bar > span { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+.bar > span.warn { background: var(--yellow); }
+.bar > span.crit { background: var(--red); }
+.spark { width: 100%; height: 44px; display: block; margin-top: .5rem; }
+.spark-label { font-size: .7rem; color: var(--muted); }
+.content table.backups td, .content table.backups th { padding: .45rem .75rem; font-size: .85rem; }
+.ok { color: var(--green); } .old { color: var(--red); } .na { color: var(--muted); }
+.error { background: rgba(248,113,113,.1); border: 1px solid var(--red); color: var(--red);
+  border-radius: .5rem; padding: .75rem 1rem; margin-bottom: 1rem; }
+</style>
+</head>
+<body>
+<nav class="main-nav">
+<ul>
+<li><a href="index.html">&#9670; Dashboard</a></li>
+<li><a href="anleitung-java.html">Anleitung Javaversion</a></li>
+<li><a href="news.html">Neuigkeiten</a></li>
+<li><a href="das-projekt.html">Das Projekt: Minecraft Unterricht in der Schule</a>
+<ul>
+<li><a href="arbeiten-im-projekt.html">Arbeiten im Projekt</a></li>
+<li><a href="das-team.html" class="active">Das Team</a></li>
+<li><a href="minecraft.html">Minecraft</a></li>
+<li><a href="sample-page-2.html">Projekt-Inhalte</a></li>
+<li><a href="beispiele-fur-inhalte-unterrichtsfacher.html">Themen für den Geschichts-Unterricht</a></li>
+<li><a href="beispiele-fur-mathematik.html">Themen für den Mathematik-Unterricht</a></li>
+<li><a href="warum-in-der-schule.html">Warum in der Schule?</a></li>
+</ul></li>
+<li><a href="album.html">Filme</a></li>
+<li><a href="infos-zu-minecraft.html">Infos zu Minecraft</a>
+<ul>
+<li><a href="minecraft-build-con.html">MineCraft Build-Con</a></li>
+<li><a href="mobel-bauen.html">Möbel bauen</a></li>
+<li><a href="tips-fur-admins.html">Tips für Admins</a>
+<ul>
+<li><a href="eigenen-server-aufbauen.html">Eigenen Server aufbauen</a></li>
+<li><a href="mapcrafter-einrichten.html">Mapcrafter einrichten</a></li>
+</ul></li>
+</ul></li>
+<li><a href="java.html">Java</a>
+<ul>
+<li><a href="das-erste-plugin.html">Das erste Plugin</a></li>
+<li><a href="die-programme.html">Die Programme</a></li>
+<li><a href="entwicklung-einrichten.html">Entwicklung einrichten</a></li>
+<li><a href="geomaptools-minecraft-plugin.html">geomaptools minecraft plugin</a></li>
+<li><a href="lokaler-server-zum-uben.html">Lokaler Server zum Üben</a></li>
+</ul></li>
+<li><a href="javascript.html">Javascript</a>
+<ul>
+<li><a href="blumenbeet-und-blumenkuebel.html">Blumenbeet und Blumenkuebel</a></li>
+<li><a href="ein-script-ausfuhren.html">Ein Script ausführen</a></li>
+<li><a href="filmtutor.html">FilmTutor</a></li>
+<li><a href="hochhaus-bauen.html">Hochhaus bauen</a></li>
+<li><a href="mit-farben-bauen.html">Mit Farben bauen</a></li>
+<li><a href="wtc-javascript-source.html">WTC Javascript Source</a></li>
+<li><a href="wtc-twin-towers-bauen.html">WTC Twin Towers bauen</a></li>
+</ul></li>
+<li><a href="massstab-und-blocke.html">Messen und Bauen</a>
+<ul>
+<li><a href="massstab.html">Unser Massstab</a></li>
+</ul></li>
+<li><a href="datenschutzerklarung.html">Datenschutz</a></li>
+<li><a href="server.html" class="active">Server-Status</a></li>
+<li><a href="welt-ansicht.html">3D Welt-Ansicht</a></li>
+</ul>
+</nav>
+
+<main class="content wide">
+<h1>Server-Status</h1>
+<p class="lead">Zustand der Server, auf denen die Minecraft-Welten laufen: Auslastung, Speicher und die nächtlichen Sicherungen. Aktualisiert sich alle 30 Sekunden.</p>
+<div id="error"></div>
+<div class="grid" id="machines"><p class="na">Lade Daten …</p></div>
+
+<h2>Sicherungen</h2>
+<p class="lead">Jede Nacht werden die Welten gesichert. Grün: Sicherung jünger als 30 Stunden.</p>
+<div id="backups"><p class="na">Lade Daten …</p></div>
+<p class="meta" id="updated"></p>
+</main>
+
+<script>
+const API = '/api/prometheus/api/v1/';
+const MACHINES = {
+  nc3: { title: 'nc3', host: 'cndrbrbr.de' },
+  meckminecraft: { title: 'meckminecraft', host: 'meckminecraft.de' },
+  codefield: { title: 'codefield', host: 'codefield.de' },
+};
+// Server, die bewusst nicht von mineback gesichert werden.
+const BACKUP_EXCEPTIONS = { 'cndrbrbr/mc1': 'Forge-Server – mineback kann ihn nicht sichern', 'meckminecraft/bungee': 'Proxy, keine Welt' };
+const NET = 'device!~"lo|docker.*|veth.*|br-.*"';
+
+function esc(v) { return String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function q(expr) {
+  const r = await fetch(API + 'query?query=' + encodeURIComponent(expr));
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return (await r.json()).data.result;
+}
+async function qr(expr, hours, step) {
+  const end = Math.floor(Date.now() / 1000), start = end - hours * 3600;
+  const r = await fetch(API + 'query_range?query=' + encodeURIComponent(expr) + '&start=' + start + '&end=' + end + '&step=' + step);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return (await r.json()).data.result;
+}
+function byMachine(result) {
+  const m = {};
+  for (const r of result) m[r.metric.machine] = parseFloat(r.value[1]);
+  return m;
+}
+function bytes(b) {
+  if (b == null || isNaN(b)) return '–';
+  const u = ['B', 'KB', 'MB', 'GB', 'TB']; let i = 0;
+  while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
+  return (b >= 100 || i === 0 ? b.toFixed(0) : b.toFixed(1)) + ' ' + u[i];
+}
+function duration(s) {
+  if (s == null || isNaN(s)) return '–';
+  const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  return d ? d + ' T ' + h + ' Std' : h ? h + ' Std ' + m + ' Min' : m + ' Min';
+}
+function pctBar(p) {
+  if (p == null || isNaN(p)) return '';
+  const cls = p >= 90 ? 'crit' : p >= 75 ? 'warn' : '';
+  return '<div class="bar"><span class="' + cls + '" style="width:' + Math.min(100, p).toFixed(0) + '%"></span></div>';
+}
+function row(label, val) { return '<div class="row"><span class="label">' + label + '</span><span class="val">' + val + '</span></div>'; }
+function spark(values) {
+  const pts = values.filter(v => v != null);
+  if (pts.length < 2) return '';
+  const w = 300, h = 44, n = values.length;
+  let d = '';
+  values.forEach((v, i) => {
+    if (v == null) return;
+    const x = (i / (n - 1)) * w, y = h - 2 - Math.min(100, v) / 100 * (h - 4);
+    d += (d ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1);
+  });
+  return '<svg class="spark" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" role="img" aria-label="CPU-Auslastung der letzten 24 Stunden">' +
+    '<path d="' + d + '" fill="none" stroke="#6366f1" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>' +
+    '<div class="spark-label">CPU-Auslastung, letzte 24 Stunden</div>';
+}
+function ago(sec) {
+  if (sec < 3600) return Math.round(sec / 60) + ' Min';
+  if (sec < 172800) return Math.round(sec / 3600) + ' Std';
+  return Math.round(sec / 86400) + ' Tage';
+}
+
+async function refresh() {
+  try {
+    const [up, inst, boot, now, cpu, cores, load1, load15, memT, memA, fsS, fsA, rx, tx, mc, cpuHist] = await Promise.all([
+      q('up{job="node"}'),
+      q('up{job="node"}'),
+      q('node_boot_time_seconds'),
+      q('node_time_seconds'),
+      q('100 * (1 - avg by (machine) (rate(node_cpu_seconds_total{mode="idle"}[5m])))'),
+      q('count by (machine) (node_cpu_seconds_total{mode="idle"})'),
+      q('node_load1'), q('node_load15'),
+      q('node_memory_MemTotal_bytes'), q('node_memory_MemAvailable_bytes'),
+      q('max by (machine) (node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"})'),
+      q('max by (machine) (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"})'),
+      q('sum by (machine) (rate(node_network_receive_bytes_total{' + NET + '}[5m]))'),
+      q('sum by (machine) (rate(node_network_transmit_bytes_total{' + NET + '}[5m]))'),
+      q('up{job="minecraft"}'),
+      qr('100 * (1 - avg by (machine) (rate(node_cpu_seconds_total{mode="idle"}[15m])))', 24, 900),
+    ]);
+    const U = byMachine(up), B = byMachine(boot), N = byMachine(now), C = byMachine(cpu), K = byMachine(cores),
+      L1 = byMachine(load1), L15 = byMachine(load15), MT = byMachine(memT), MA = byMachine(memA),
+      FS = byMachine(fsS), FA = byMachine(fsA), RX = byMachine(rx), TX = byMachine(tx);
+    const ipOf = {};
+    for (const r of inst) ipOf[r.metric.machine] = r.metric.instance.replace(/:\d+$/, '');
+    const mcBy = {};
+    for (const r of mc) {
+      const ip = r.metric.connect_ip; if (!ip) continue;
+      (mcBy[ip] = mcBy[ip] || { up: 0, total: 0 }).total++;
+      if (r.value[1] === '1') mcBy[ip].up++;
+    }
+    const hist = {};
+    const steps = 97;
+    for (const r of cpuHist) {
+      const arr = new Array(steps).fill(null);
+      const start = Math.floor(Date.now() / 1000) - 24 * 3600;
+      for (const [t, v] of r.values) { const i = Math.round((t - start) / 900); if (i >= 0 && i < steps) arr[i] = parseFloat(v); }
+      hist[r.metric.machine] = arr;
+    }
+
+    const names = Object.keys(U).sort((a, b) => a.localeCompare(b));
+    document.getElementById('machines').innerHTML = names.map(m => {
+      const info = MACHINES[m] || { title: m, host: '' };
+      const isUp = U[m] === 1;
+      const memUsed = MT[m] - MA[m], memP = memUsed / MT[m] * 100;
+      const fsUsed = FS[m] - FA[m], fsP = fsUsed / FS[m] * 100;
+      const mcs = mcBy[ipOf[m]];
+      const mcBadge = mcs ? '<span class="badge ' + (mcs.up === mcs.total ? 'up' : 'warn') + '">' + mcs.up + '/' + mcs.total + ' Minecraft online</span>' : '';
+      return '<div class="box ' + (isUp ? 'up' : 'down') + '">' +
+        '<div class="box-head"><h2>' + esc(info.title) + '</h2><span class="badge ' + (isUp ? 'up' : 'down') + '">' + (isUp ? 'ONLINE' : 'OFFLINE') + '</span></div>' +
+        '<div class="sub">' + esc(info.host) + (isUp ? ' · läuft seit ' + duration(N[m] - B[m]) : '') + ' ' + mcBadge + '</div>' +
+        (isUp ?
+          row('CPU (' + (K[m] || '?') + ' Kerne)', (C[m] != null ? C[m].toFixed(0) + ' %' : '–')) + pctBar(C[m]) +
+          row('Last 1 / 15 Min', (L1[m] != null ? L1[m].toFixed(2) : '–') + ' / ' + (L15[m] != null ? L15[m].toFixed(2) : '–')) +
+          row('Arbeitsspeicher', bytes(memUsed) + ' / ' + bytes(MT[m])) + pctBar(memP) +
+          row('Festplatte', bytes(fsUsed) + ' / ' + bytes(FS[m])) + pctBar(fsP) +
+          row('Netzwerk ↓ / ↑', bytes(RX[m]) + '/s / ' + bytes(TX[m]) + '/s') +
+          spark(hist[m] || [])
+          : '<p class="old">Keine Daten – der Server antwortet nicht.</p>') +
+        '</div>';
+    }).join('') || '<p class="na">Keine Server gefunden.</p>';
+
+    const bk = await q('mineback_last_backup_timestamp_seconds');
+    const nowS = Date.now() / 1000;
+    const rows = bk.map(r => ({ key: r.metric.host + '/' + r.metric.server, host: r.metric.host, server: r.metric.server, age: nowS - parseFloat(r.value[1]) }))
+      .sort((a, b) => a.key.localeCompare(b.key, 'de', { numeric: true }));
+    document.getElementById('backups').innerHTML = rows.length ?
+      '<table class="backups"><tr><th>Server</th><th>Welt</th><th>Letzte Sicherung</th><th>Status</th></tr>' +
+      rows.map(r => {
+        const exc = BACKUP_EXCEPTIONS[r.key];
+        const status = exc ? '<span class="na">' + esc(exc) + '</span>'
+          : r.age <= 30 * 3600 ? '<span class="ok">✓ aktuell</span>' : '<span class="old">✗ veraltet</span>';
+        return '<tr><td>' + esc(r.host) + '</td><td>' + esc(r.server) + '</td><td>vor ' + ago(r.age) + '</td><td>' + status + '</td></tr>';
+      }).join('') + '</table>'
+      : '<p class="na">Keine Sicherungsdaten.</p>';
+
+    document.getElementById('error').innerHTML = '';
+    document.getElementById('updated').textContent = 'Aktualisiert: ' + new Date().toLocaleTimeString('de-DE');
+  } catch (e) {
+    document.getElementById('error').innerHTML = '<div class="error">Daten konnten nicht geladen werden: ' + esc(e.message) + '</div>';
+  }
+}
+refresh();
+setInterval(refresh, 30000);
+</script>
+</body>
+</html>

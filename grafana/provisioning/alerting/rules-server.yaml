@@ -1,0 +1,189 @@
+# Server-Alarme (node_exporter + mineback-Sicherungen), Benachrichtigung über
+# den Contact Point "Discord" (siehe policies.yaml). Lokal ergänzt 2026-10-17.
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: Server
+    folder: Server
+    interval: 60s
+    rules:
+      - uid: srv-host-down
+        title: Server nicht erreichbar
+        condition: C
+        for: 3m
+        data:
+          - refId: A
+            relativeTimeRange: {from: 600, to: 0}
+            datasourceUid: prometheus
+            model:
+              expr: 'up{job="node"} < 1'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model: {type: reduce, expression: A, reducer: last, refId: B}
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              refId: C
+              conditions:
+                - evaluator: {type: gt, params: [0]}
+        noDataState: Alerting
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.machine }} ist nicht erreichbar"
+          description: "Prometheus erreicht den node_exporter von {{ $labels.machine }} seit 3 Minuten nicht."
+      - uid: srv-disk-full
+        title: Festplatte fast voll
+        condition: C
+        for: 10m
+        data:
+          - refId: A
+            relativeTimeRange: {from: 600, to: 0}
+            datasourceUid: prometheus
+            model:
+              expr: '(1 - node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"}) * 100 > 85'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model: {type: reduce, expression: A, reducer: last, refId: B}
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              refId: C
+              conditions:
+                - evaluator: {type: gt, params: [0]}
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.machine }}: Festplatte zu {{ printf \"%.0f\" $values.B.Value }} % voll"
+          description: "Auf {{ $labels.machine }} ist die Root-Partition zu über 85 % belegt."
+      - uid: srv-memory-low
+        title: Arbeitsspeicher knapp
+        condition: C
+        for: 10m
+        data:
+          - refId: A
+            relativeTimeRange: {from: 600, to: 0}
+            datasourceUid: prometheus
+            model:
+              expr: 'node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 10'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model: {type: reduce, expression: A, reducer: last, refId: B}
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              refId: C
+              conditions:
+                - evaluator: {type: gt, params: [0]}
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.machine }}: nur noch {{ printf \"%.0f\" $values.B.Value }} % RAM frei"
+          description: "Auf {{ $labels.machine }} sind seit 10 Minuten weniger als 10 % Arbeitsspeicher verfügbar."
+      - uid: srv-load-high
+        title: Dauerhaft hohe CPU-Last
+        condition: C
+        for: 30m
+        data:
+          - refId: A
+            relativeTimeRange: {from: 600, to: 0}
+            datasourceUid: prometheus
+            model:
+              expr: 'node_load15 / on(instance) group_left count by (instance) (node_cpu_seconds_total{mode="idle"}) > 1.5'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model: {type: reduce, expression: A, reducer: last, refId: B}
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              refId: C
+              conditions:
+                - evaluator: {type: gt, params: [0]}
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.machine }}: CPU dauerhaft überlastet"
+          description: "Die 15-Minuten-Last auf {{ $labels.machine }} liegt seit 30 Minuten über dem 1,5-fachen der CPU-Kerne."
+      - uid: srv-unit-failed
+        title: Systemdienst ausgefallen
+        condition: C
+        for: 5m
+        data:
+          - refId: A
+            relativeTimeRange: {from: 600, to: 0}
+            datasourceUid: prometheus
+            model:
+              expr: 'node_systemd_unit_state{state="failed",name!="mineback-agent.service"} == 1'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model: {type: reduce, expression: A, reducer: last, refId: B}
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              refId: C
+              conditions:
+                - evaluator: {type: gt, params: [0]}
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.machine }}: {{ $labels.name }} ist ausgefallen"
+          description: "Der Systemdienst {{ $labels.name }} auf {{ $labels.machine }} ist im Zustand failed."
+      - uid: srv-backup-old
+        title: Sicherung veraltet
+        condition: C
+        for: 15m
+        data:
+          - refId: A
+            relativeTimeRange: {from: 600, to: 0}
+            datasourceUid: prometheus
+            model:
+              expr: '(time() - mineback_last_backup_timestamp_seconds) / 3600 > 30 unless mineback_last_backup_timestamp_seconds{host="cndrbrbr",server="mc1"} unless mineback_last_backup_timestamp_seconds{host="meckminecraft",server="bungee"}'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model: {type: reduce, expression: A, reducer: last, refId: B}
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              refId: C
+              conditions:
+                - evaluator: {type: gt, params: [0]}
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: "Sicherung {{ $labels.host }}/{{ $labels.server }} ist {{ printf \"%.0f\" $values.B.Value }} Stunden alt"
+          description: "Seit über 30 Stunden ist keine neue mineback-Sicherung für {{ $labels.host }}/{{ $labels.server }} angekommen."

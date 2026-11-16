@@ -1,4 +1,5 @@
-:80 {
+# Automatisch generiert von setup.sh — nicht manuell bearbeiten
+meckminecraft.de {
 	root * /srv
 	file_server
 
@@ -7,12 +8,18 @@
 	}
 }
 
-# Uncomment and replace yourdomain.com for automatic HTTPS via Let's Encrypt:
-# yourdomain.com {
-# 	root * /srv
-# 	file_server
-#
-# 	handle_path /api/prometheus/* {
-# 		reverse_proxy prometheus:9090
-# 	}
-# }
+# Admin page of minecraftHostingServer (/root/minecraftHostingServer, container adminpanel).
+# Added by hand: re-running this stack's setup.sh overwrites this file — add the block again then.
+admin.meckminecraft.de {
+	reverse_proxy adminpanel:8000
+}
+
+# BlueMap-Webkarte der Inigresso-Welt (meck mc2, Plugin-Webserver Port 8100). Von Hand ergänzt.
+karte-inigresso.meckminecraft.de {
+	reverse_proxy mc2:8100
+}
+
+# Grafana über HTTPS (vorher direkt :3000 per HTTP). Von Hand ergänzt 2026-11-16.
+grafana.meckminecraft.de {
+	reverse_proxy grafana:3000
+}

@@ -325,6 +325,8 @@
 <li><a href="massstab.html">Unser Massstab</a></li>
 </ul></li>
 <li><a href="datenschutzerklarung.html">Datenschutz</a></li>
+<li><a href="server.html">Server-Status</a></li>
+<li><a href="welt-ansicht.html">3D Welt-Ansicht</a></li>
 </ul>
 </nav>
 
@@ -387,9 +389,13 @@
 
   fetch('servers.json').then(r => r.json()).then(d => { serverNames = d; }).catch(() => {});
 
-  // displayName priority: mc_server_info motd > servers.json > server_name
+  // displayName priority: mc_server_info motd > servers.json (MOTD) > server_name
   function displayName(id) {
     return motdNames[id] || serverNames[id] || id;
+  }
+
+  function esc(v) {
+    return String(v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
   }
 
   async function query(expr) {
@@ -649,10 +655,9 @@
           return `
           <div class="server-card ${s.up ? 'up' : 'down'}">
             <div class="server-title">
-              <div class="server-name">${displayName(name)}</div>
-              ${s.localName ? `<span class="local-name" title="Lokaler Servername">${s.localName}</span>` : ''}
+              <div class="server-name" title="${esc(displayName(name))}">${esc(displayName(name))}</div>
             </div>
-            <div class="server-id">${name}${s.version ? ` · ${s.version}` : ''}</div>
+            <div class="server-id">${s.localName ? `<span class="local-name" title="Lokaler Servername">${esc(s.localName)}</span> ` : ''}${esc(name)}${s.version ? ` · ${esc(s.version)}` : ''}</div>
             ${s.ip ? `<div class="server-connect">${s.ip}${s.port ? ':' + s.port : ''}</div>` : ''}
             <div class="status-row">
               <div class="badge ${s.up ? 'badge-up' : 'badge-down'}">${s.up ? 'ONLINE' : 'OFFLINE'}</div>
