@@ -1,5 +1,5 @@
 # Server-Alarme (node_exporter + mineback-Sicherungen), Benachrichtigung über
-# den Contact Point "Discord" (siehe policies.yaml). Lokal ergänzt 2026-10-17.
+# den Contact Point "Discord" (siehe policies.yaml). Lokal ergänzt 2026-10-17, Offsite-Kopie 2026-11-18.
 apiVersion: 1
 groups:
   - orgId: 1
@@ -187,3 +187,93 @@ groups:
         annotations:
           summary: "Sicherung {{ $labels.host }}/{{ $labels.server }} ist {{ printf \"%.0f\" $values.B.Value }} Stunden alt"
           description: "Seit über 30 Stunden ist keine neue mineback-Sicherung für {{ $labels.host }}/{{ $labels.server }} angekommen."
+      - uid: srv-offsite-old
+        title: Offsite-Kopie veraltet
+        condition: C
+        for: 15m
+        data:
+          - refId: A
+            relativeTimeRange: {from: 600, to: 0}
+            datasourceUid: prometheus
+            model:
+              expr: '(time() - mineback_offsite_last_success_timestamp_seconds) / 3600 > 36'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model: {type: reduce, expression: A, reducer: last, refId: B}
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              refId: C
+              conditions:
+                - evaluator: {type: gt, params: [0]}
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: "Offsite-Kopie auf der Storage Box ist {{ printf \"%.0f\" $values.B.Value }} Stunden alt"
+          description: "Seit über 36 Stunden ist kein Lauf von mineback-offsite auf {{ $labels.machine }} erfolgreich abgeschlossen (täglich 03:30). Prüfen: journalctl -u mineback-offsite."
+      - uid: srv-offsite-collect
+        title: Offsite-Kopie unvollständig
+        condition: C
+        for: 15m
+        data:
+          - refId: A
+            relativeTimeRange: {from: 600, to: 0}
+            datasourceUid: prometheus
+            model:
+              expr: 'mineback_offsite_extra_collect_ok == 0'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model: {type: reduce, expression: A, reducer: last, refId: B}
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              refId: C
+              conditions:
+                - evaluator: {type: gt, params: [-1]}
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: "Offsite-Kopie: Zugangsdateien nicht vollständig eingesammelt"
+          description: "mineback-offsite-collect auf {{ $labels.machine }} konnte beim letzten Lauf nicht alle Zugangsdateien (Omasys, NonameQuiz, minecraftDash) einsammeln. Prüfen: journalctl -u mineback-offsite."
+      - uid: srv-offsite-missing
+        title: Offsite-Metrik fehlt
+        condition: C
+        for: 30m
+        data:
+          - refId: A
+            relativeTimeRange: {from: 600, to: 0}
+            datasourceUid: prometheus
+            model:
+              expr: 'absent(mineback_offsite_last_success_timestamp_seconds) unless on() (up{job="node",machine="nc3"} == 0)'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model: {type: reduce, expression: A, reducer: last, refId: B}
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              refId: C
+              conditions:
+                - evaluator: {type: gt, params: [0]}
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: "Offsite-Kopie wird nicht mehr überwacht"
+          description: "Die Metrik mineback_offsite_last_success_timestamp_seconds fehlt, obwohl NC3 erreichbar ist (Datei /var/lib/prometheus/node-exporter/mineback_offsite.prom auf NC3 prüfen)."
