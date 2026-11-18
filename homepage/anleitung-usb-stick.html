@@ -72,6 +72,13 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
 .pdf-frame { width: 100%; height: calc(100vh - 12rem); min-height: 500px;
   border: 1px solid var(--border); border-radius: .5rem; background: #fff; }
 
+/* ── Anleitung ── */
+.content .subtitle { color: var(--muted); margin-bottom: 1rem; }
+.content .note { background: rgba(74,222,128,.07); border: 1px solid rgba(74,222,128,.3);
+  border-left: 3px solid var(--green); border-radius: .5rem; padding: .9rem 1.2rem; margin: 1rem 0; }
+.content .note p { margin: 0; }
+.content .small { font-size: .85rem; color: var(--muted); }
+
 /* ── Mobile ── */
 @media (max-width: 768px) {
   body { flex-direction: column; }
@@ -136,16 +143,77 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', syste
 </ul>
 </nav>
 
-<main class="content wide">
+<main class="content">
 <h1>Minecraft Java 26.3 auf dem USB-Stick</h1>
-<p>Schritt-für-Schritt-Anleitung für Windows-Schulrechner: Minecraft Java 26.3 mit dem portablen Prism Launcher vom USB-Stick starten, ohne den Minecraft-Launcher auf jedem Rechner zu installieren.</p>
+<p class="subtitle">Schritt-für-Schritt-Anleitung für Windows-Schulrechner · Prism Launcher Portable · Vanilla Minecraft<br>Stand: 18. November 2026</p>
 <div class="pdf-actions">
-<a href="AnleitungMinecraftUSBStick.pdf" target="_blank" rel="noopener">In neuem Tab öffnen</a>
-<a href="AnleitungMinecraftUSBStick.pdf" download>PDF herunterladen</a>
+<a href="AnleitungMinecraftUSBStick.pdf" download>Anleitung als PDF herunterladen</a>
 </div>
-<object class="pdf-frame" data="AnleitungMinecraftUSBStick.pdf" type="application/pdf">
-<p>Dein Browser kann das PDF hier nicht anzeigen. <a href="AnleitungMinecraftUSBStick.pdf">PDF öffnen</a></p>
-</object>
+
+<div class="note">
+<p><strong>Das Ziel:</strong> Minecraft Java 26.3 von einem USB-Stick starten, ohne den offiziellen Minecraft-Launcher auf jedem Schulrechner zu installieren. Der portable Prism Launcher speichert seine Spieldaten im eigenen Ordner. Voraussetzung: Die Schule erlaubt den Start von Anwendungen vom USB-Stick.</p>
+</div>
+
+<h2>1 · Das wird benötigt</h2>
+<ul>
+<li>USB-Stick mit mindestens 16 GB; empfohlen sind 32–64 GB und USB 3.0 oder schneller.</li>
+<li>Windows 10 oder 11 (64 Bit), Internetzugang zur Einrichtung und geeignete Grafiktreiber.</li>
+<li>Eigenes Microsoft-Konto mit gültiger Lizenz für Minecraft: Java Edition.</li>
+<li>Prism Launcher Portable und eine zu Minecraft 26.3 passende Java-Laufzeit (Java 25).</li>
+</ul>
+
+<h2>2 · Prism Launcher herunterladen und entpacken</h2>
+<p>Öffne <a href="https://prismlauncher.org/download/windows/" target="_blank" rel="noopener">prismlauncher.org/download/windows/</a>. Wähle unter <strong>x86-64</strong> die Datei <strong>Portable (.zip)</strong> (nicht den Installer). Entpacke <strong>den gesamten ZIP-Inhalt</strong> in einen Ordner auf dem USB-Stick, z. B. <code>E:\Minecraft-AG\</code>.</p>
+<p>Die Datei <strong>prismlauncher.exe</strong> liegt anschließend im entpackten Ordner. Starte sie per Doppelklick. Der Laufwerksbuchstabe kann auf einem anderen PC abweichen.</p>
+
+<h2>3 · Java 25 automatisch verwalten</h2>
+<p>Im Prism Launcher: <strong>Einstellungen → Java</strong>. Aktiviere <strong>Autodetect Java version</strong> und <strong>Auto-download Mojang Java</strong> (die Bezeichnungen können je nach Sprache etwas anders lauten). Prism kann die erforderliche Laufzeit dann selbst herunterladen. Über <strong>Ordner → Launcher Root</strong> lässt sich der portable Datenordner prüfen.</p>
+<p>Für Vanilla sind <strong>3–4 GiB</strong> maximal zugewiesener Arbeitsspeicher ein sinnvoller Ausgangspunkt; auf Rechnern mit wenig RAM entsprechend weniger wählen.</p>
+
+<h2>4 · Minecraft 26.3 (Vanilla) einrichten</h2>
+<p>Klicke auf <strong>Instanz hinzufügen</strong>, wähle die offizielle <strong>Release-Version 26.3</strong> und <strong>keinen Mod-Loader</strong>. Vergib beispielsweise den Namen <strong>Minecraft 26.3 Vanilla</strong> und bestätige die Auswahl.</p>
+
+<h2>5 · Mit Microsoft anmelden und starten</h2>
+<p>Öffne <strong>Accounts → Accounts verwalten → Microsoft hinzufügen</strong>. Folge der Anmeldung im Browser (ggf. mit Einmalcode und zweitem Faktor). Wähle anschließend die Instanz <strong>Minecraft 26.3 Vanilla</strong> und klicke <strong>Starten</strong>. Beim ersten Start werden zusätzliche Dateien heruntergeladen.</p>
+
+<h2>6 · Minecraft-AG-Server hinzufügen</h2>
+<p>In Minecraft: <strong>Mehrspieler → Server hinzufügen</strong>. Trage den Namen der AG und die von der Schule genannte Serveradresse ein. Die vom Server unterstützte Spielversion muss zu deinem Client passen.</p>
+<table>
+<thead><tr><th>Einstellung</th><th>Beispiel</th></tr></thead>
+<tbody>
+<tr><td>Servername</td><td>Minecraft-AG</td></tr>
+<tr><td>Serveradresse</td><td>&lt;Adresse eures Servers&gt;</td></tr>
+</tbody>
+</table>
+
+<h2>7 · An einem anderen Schulrechner spielen</h2>
+<p>USB-Stick anschließen → <strong>prismlauncher.exe</strong> aus dem portablen Ordner starten → gewünschte Instanz auswählen → spielen. Welten, Instanzen und Serverlisten bleiben bei korrekter portabler Einrichtung auf dem Stick. Ein neuer PC kann dennoch eine erneute Microsoft-Anmeldung erfordern.</p>
+
+<h2>8 · Typische Probleme</h2>
+<table>
+<thead><tr><th>Problem</th><th>Was prüfen?</th></tr></thead>
+<tbody>
+<tr><td>Launcher startet nicht</td><td>Erlaubt die Schulrichtlinie EXE-Dateien von USB?</td></tr>
+<tr><td>Java-Fehler</td><td>Java 25 eingestellt bzw. automatischer Download aktiviert?</td></tr>
+<tr><td>Minecraft langsam</td><td>USB 3.x, ausreichend RAM, Grafikeinstellungen reduzieren.</td></tr>
+<tr><td>Server nicht erreichbar</td><td>Adresse, Version, Netzwerk und Firewall prüfen.</td></tr>
+<tr><td>Anmeldung scheitert</td><td>Internetzugang, Account-Lizenz und Microsoft-Bestätigung.</td></tr>
+</tbody>
+</table>
+
+<h2>9 · Wichtig für die gemeinsame Nutzung</h2>
+<div class="note">
+<p><strong>Datenschutz:</strong> USB-Sticks mit eingeloggtem Microsoft-Konto nicht unter Schülern weitergeben. Für mehrere Schüler die vorbereitete Launcher-Installation <strong>ohne persönliche Accounts und Tokens</strong> kopieren; jeder meldet sich mit seinem eigenen lizenzierten Konto an. Ein portabler Launcher umgeht keine schulischen Sicherheitssperren.</p>
+</div>
+<p class="small"><strong>Hinweis zur Portabilität:</strong> Prism speichert bei der portablen Version seine Daten im Launcher-Ordner, einschließlich verwalteter Java-Installationen. Kontrolliere mit <strong>Ordner → Launcher Root</strong>, dass dieser Ordner tatsächlich auf dem Stick liegt. Windows kann dennoch temporäre Dateien auf dem Schulrechner erzeugen.</p>
+
+<h2>Offizielle Informationen</h2>
+<ul>
+<li>Prism Launcher (Download): <a href="https://prismlauncher.org/download/windows/" target="_blank" rel="noopener">prismlauncher.org/download/windows/</a></li>
+<li>Prism Launcher (Datenverzeichnisse): <a href="https://prismlauncher.org/wiki/getting-started/data-location/" target="_blank" rel="noopener">prismlauncher.org/wiki/getting-started/data-location/</a></li>
+<li>Prism Launcher (Java): <a href="https://prismlauncher.org/wiki/getting-started/installing-java/" target="_blank" rel="noopener">prismlauncher.org/wiki/getting-started/installing-java/</a></li>
+<li>Minecraft 26.3 Release Notes: <a href="https://www.minecraft.net/en-us/article/minecraft-java-edition-26-3" target="_blank" rel="noopener">minecraft.net/en-us/article/minecraft-java-edition-26-3</a></li>
+</ul>
 </main>
 </body>
 </html>
