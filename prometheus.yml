@@ -19,14 +19,14 @@ scrape_configs:
 
       - targets: ["185.170.113.136:9941"]
         labels:
-          server_name: "meckminecraft-campus"
+          server_name: "meckminecraft-survival"
           local_name: "mc1"
           connect_ip: "185.170.113.136"
           connect_port: "25565"
 
       - targets: ["185.170.113.136:9942"]
         labels:
-          server_name: "meckminecraft-bedwars"
+          server_name: "meckminecraft-inigresso"
           local_name: "mc2"
           connect_ip: "185.170.113.136"
           connect_port: "25565"
